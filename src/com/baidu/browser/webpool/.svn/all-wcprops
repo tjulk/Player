@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/app/gensoft/searchbox/!svn/ver/8736/trunk/client/android/src/com/baidu/browser/webpool
+END
+BdWebPoolCustomView.java
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/app/gensoft/searchbox/!svn/ver/3654/trunk/client/android/src/com/baidu/browser/webpool/BdWebPoolCustomView.java
+END
+BdWebPoolMaskView.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/app/gensoft/searchbox/!svn/ver/3772/trunk/client/android/src/com/baidu/browser/webpool/BdWebPoolMaskView.java
+END
+BdWebPoolViewClient.java
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/app/gensoft/searchbox/!svn/ver/3772/trunk/client/android/src/com/baidu/browser/webpool/BdWebPoolViewClient.java
+END
+BdWebPoolView.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/app/gensoft/searchbox/!svn/ver/8033/trunk/client/android/src/com/baidu/browser/webpool/BdWebPoolView.java
+END
+BdErrorView.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/app/gensoft/searchbox/!svn/ver/8736/trunk/client/android/src/com/baidu/browser/webpool/BdErrorView.java
+END
+BdWebPoolChromeClient.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/app/gensoft/searchbox/!svn/ver/4236/trunk/client/android/src/com/baidu/browser/webpool/BdWebPoolChromeClient.java
+END
+BdWebPoolBackForwardListItem.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/app/gensoft/searchbox/!svn/ver/3772/trunk/client/android/src/com/baidu/browser/webpool/BdWebPoolBackForwardListItem.java
+END
+BdWebPoolViewListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/app/gensoft/searchbox/!svn/ver/3619/trunk/client/android/src/com/baidu/browser/webpool/BdWebPoolViewListener.java
+END
+BdWebPoolBackForwardList.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/app/gensoft/searchbox/!svn/ver/3772/trunk/client/android/src/com/baidu/browser/webpool/BdWebPoolBackForwardList.java
+END

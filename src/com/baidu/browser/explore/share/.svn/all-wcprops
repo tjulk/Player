@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/app/gensoft/searchbox/!svn/ver/3619/trunk/client/android/src/com/baidu/browser/explore/share
+END
+BdWaitingDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/app/gensoft/searchbox/!svn/ver/3619/trunk/client/android/src/com/baidu/browser/explore/share/BdWaitingDialog.java
+END
+BdSharer.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/app/gensoft/searchbox/!svn/ver/3619/trunk/client/android/src/com/baidu/browser/explore/share/BdSharer.java
+END
+BdTinyUrlGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/app/gensoft/searchbox/!svn/ver/3619/trunk/client/android/src/com/baidu/browser/explore/share/BdTinyUrlGenerator.java
+END
+BdSharerOM.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/app/gensoft/searchbox/!svn/ver/3619/trunk/client/android/src/com/baidu/browser/explore/share/BdSharerOM.java
+END

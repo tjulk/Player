@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/app/gensoft/searchbox/!svn/ver/4408/trunk/client/android/src/com/baidu/browser/core/ui
+END
+BdPopMenuItem.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/app/gensoft/searchbox/!svn/ver/4095/trunk/client/android/src/com/baidu/browser/core/ui/BdPopMenuItem.java
+END
+BdPopMenu.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/app/gensoft/searchbox/!svn/ver/4015/trunk/client/android/src/com/baidu/browser/core/ui/BdPopMenu.java
+END
+BdLayerView.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/app/gensoft/searchbox/!svn/ver/3512/trunk/client/android/src/com/baidu/browser/core/ui/BdLayerView.java
+END
+BdPopMenuListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/app/gensoft/searchbox/!svn/ver/3619/trunk/client/android/src/com/baidu/browser/core/ui/BdPopMenuListener.java
+END
+IUIElement.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/app/gensoft/searchbox/!svn/ver/3512/trunk/client/android/src/com/baidu/browser/core/ui/IUIElement.java
+END
+BdRootView.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/app/gensoft/searchbox/!svn/ver/3512/trunk/client/android/src/com/baidu/browser/core/ui/BdRootView.java
+END
+BdPopMenuGroup.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/app/gensoft/searchbox/!svn/ver/3619/trunk/client/android/src/com/baidu/browser/core/ui/BdPopMenuGroup.java
+END

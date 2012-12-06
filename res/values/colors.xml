@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <color name="toolbar_gradient_start_color">#33353c</color>
+    <color name="toolbar_gradient_end_color">#272830</color>
+    
+    <!-- 地理位置信息设置框用到的颜色值 -->
+    <color name="white">#ffffffff</color>
+    <color name="black">#ff000000</color>
+    <color name="geolocation_permissions_prompt_background">#ffdddddd</color>
+    
+    <color name="ssl_text_label">#ffffffff</color>
+    
+    
+    <!-- 长按弹出菜单 -->
+    <color name="popmenu_textcolor">#ffffffff</color>
+    
+    <!-- 错误页面文字颜色 -->
+    <color name="browser_error_page_button_text_color">#525252</color>
+    <color name="browser_error_page_text_color">#999999</color>
+    <color name="browser_error_page_button_color">#333333</color>
+    <color name="refurbish_button_color">#105dc5</color>
+    
+    <!-- 错误页面按钮颜色 -->
+    <color name="window_background_color">#fff4f4f4</color>
+ 
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="context_menu_item_tv_font_size">19dip</dimen>
+	<!-- 搜索框高度 -->	
+    <dimen name="float_searchbox_height">56dip</dimen>
+    <!-- 底部工具栏高度 -->
+	<dimen name="bottom_toolbar_height">47dip</dimen>
+	<!-- 进度条高度 -->
+	<dimen name="browser_progress_bar_height">2dip</dimen>
+	<!-- 进度条偏移量 -->
+	<dimen name="browser_progressbar_offset">4dip</dimen>
+</resources>
