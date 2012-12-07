@@ -20,8 +20,8 @@ import com.baidu.player.R;
  * 整个加载过程分为三段：第一阶段快速填充进度到某一个值；第二阶段慢速填充，直到达到设定的虚假进度最大值；若期间加载完毕，则快速将进度条填充满，然后进度条消失。
  * 
  * 本进度条不可以设置进度值范围，为了动画流畅度，进度最大值被固定为10000
- * @author chengyifan
- * @since 2012-10-28
+ * @author LEIAKNG
+ * @since 2012-12-07
  */
 public class FakeProgressBar extends ProgressBar {
     /** 默认第一阶段加载速度 */
@@ -69,7 +69,6 @@ public class FakeProgressBar extends ProgressBar {
     private Drawable mThumb;
     /** thumb offset */
     private int mThumbOffset;
-//    private Random mRandom = new Random();
     
     /**
      * 进度值范围固定在0-10000,初始值为0.
@@ -126,9 +125,6 @@ public class FakeProgressBar extends ProgressBar {
     public void hide() {
         if (getVisibility() == View.VISIBLE) {
             float start = getProgress() / (float) getMax();
-            // mAnimation = new AlphaAnimation(start, 1.0f);
-            // mAnimation.setDuration(mHideDuration);
-            // mAnimation.setInterpolator(mInterpolator);
             mAnimation = new AnimationSet(false);
             AlphaAnimation a = new AlphaAnimation(start, 1.0f);
             a.setDuration(mHideDuration);
@@ -214,7 +210,7 @@ public class FakeProgressBar extends ProgressBar {
      * @return 真实进度
      */
     public int getRealProgress() {
-        return mRealProgress / 100; // SUPPRESS CHECKSTYLE
+        return mRealProgress / 100;  
     }
     
     /**
@@ -293,7 +289,7 @@ public class FakeProgressBar extends ProgressBar {
      * @return 转换后的速度，单位为 进度/毫秒，进度最大值为10000
      */
     private static float resolveVelocity(int velocityInProgress) {
-        return velocityInProgress * 100 / (float) 1000; // SUPPRESS CHECKSTYLE
+        return velocityInProgress * 100 / (float) 1000;  
     }
 
     /**
@@ -302,6 +298,6 @@ public class FakeProgressBar extends ProgressBar {
      * @return 转换后的进度，最大值为10000
      */
     private static int resolveProgress(int progress) {
-        return progress * 100; // SUPPRESS CHECKSTYLE
+        return progress * 100;  
     }
 }

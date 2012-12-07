@@ -9,14 +9,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.Browser;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.baidu.browser.BPBrowser;
+import com.baidu.browser.core.ui.BdPopMenuGroup;
 import com.baidu.player.R;
 import com.baidu.player.ui.FakeProgressBar;
 import com.baidu.webkit.sdk.BValueCallback;
@@ -80,6 +82,9 @@ public class BPFrameView extends FrameLayout{
 	/** 进度条 **/
 	private FakeProgressBar mProgressBar;
 	
+	/** 窗口容器，用于控制窗口的切换 */
+	private BdWindowWrapper mWindowWrapper;
+	
 	/** Browser 主类 */
 	private BPBrowser mBrowser;
  
@@ -112,7 +117,52 @@ public class BPFrameView extends FrameLayout{
 		
 		mProgressBar = (FakeProgressBar) ((Activity) context).getLayoutInflater().inflate(R.layout.browser_progress_bar, null);
 		addView(mProgressBar, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,mProgressHeight));
+		mWindowWrapper = new BdWindowWrapper(context);
+        addView(mWindowWrapper, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT));
 		
+	}
+	
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		final int width = MeasureSpec.getSize(widthMeasureSpec);
+		final int height = MeasureSpec.getSize(heightMeasureSpec);
+		final int count = getChildCount();
+		for (int i = 0; i < count; i++) {
+			final View childView = getChildAt(i);
+			if (childView.getVisibility() != GONE) {
+				if (childView.equals(mProgressBar)) {
+					heightMeasureSpec = MeasureSpec.makeMeasureSpec(childView.getLayoutParams().height,
+							MeasureSpec.EXACTLY);
+				} else if (childView instanceof BdPopMenuGroup) {
+					heightMeasureSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
+				} else {
+					heightMeasureSpec = MeasureSpec.makeMeasureSpec(childView.getLayoutParams().height,
+							MeasureSpec.EXACTLY);
+				}
+				childView.measure(widthMeasureSpec, heightMeasureSpec);
+			}
+		}
+		setMeasuredDimension(width, height);
+	}
+	
+	@Override
+	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+		super.onLayout(changed, left, top, right, bottom);
+		int layoutTop = 0;
+		final int count = getChildCount();
+		for (int i = 0; i < count; i++) {
+			final View childView = getChildAt(i);
+			if (childView.getVisibility() != GONE) {
+				int height = childView.getHeight();
+				if (childView instanceof ImageView) {
+				    childView.layout(0, layoutTop, getWidth(), layoutTop + height);
+				} else if (childView.equals(mProgressBar)) {
+					childView.layout(0, layoutTop - height / 2, getWidth(), layoutTop - height / 2 + height);
+				} else if (childView instanceof BdPopMenuGroup) {
+					childView.layout(0, 0, getWidth(), getHeight());
+				} 
+			}
+		}
 	}
 
 	/**
@@ -223,26 +273,26 @@ public class BPFrameView extends FrameLayout{
 	 */
 	private void swapWindowToFocus(BPWindow window,WindowStwitchAnimation mWindowStwitchAnimation, String searchUrl) {
         if (window != null && !window.equals(mCurrentWindow)) {
-			//            if (mCurrentWindow != null && mBrowser != null) {
-			//                Bundle b = mBrowser.getSearchBoxBundle(true);
-			//                mCurrentWindow.setSearchboxBundle(b);
-			//            }
-			//            mWindowWrapper.showWindow(window, animation, searchUrl);
-			//            mCurrentWindow = window;
-			//            mCurrentWindow.setLastViewedTime(SystemClock.uptimeMillis());
-			//
-			//            if (mCurrentWindow != null && mBrowser != null) {
-			//                mBrowser.onTabChangeFinished(mCurrentWindow.getSearchboxBundle());
-			//                String url = null;
-			//                if (mCurrentWindow.isHomePage()) {
-			//                    url = Browser.HOME_PAGE;
-			//                } else {
-			//                    url = mCurrentWindow.getCurrentUrl();
-			//                }
-			//                switchBetweenHomeAndBrowser(url);
-			//                mCurrentWindow.onResume();
-			//            }
-			//            updateState(window);
+			if (mCurrentWindow != null && mBrowser != null) {
+				//Bundle b = mBrowser.getSearchBoxBundle(true);
+				//mCurrentWindow.setSearchboxBundle(b);
+			}
+			mCurrentWindow = window;
+			mWindowWrapper.showWindow(window, mWindowStwitchAnimation, searchUrl);
+			//mCurrentWindow.setLastViewedTime(SystemClock.uptimeMillis());
+			
+			if (mCurrentWindow != null && mBrowser != null) {
+				//mBrowser.onTabChangeFinished();
+				String url = null;
+				if (mCurrentWindow.isHomePage()) {
+					url = BPBrowser.HOME_PAGE;
+				} else {
+					url = mCurrentWindow.getCurrentUrl();
+				}
+				switchBetweenHomeAndBrowser(url);
+				mCurrentWindow.onResume();
+			}
+			updateState(window);
         } else if (window == mCurrentWindow) {
 	        window.loadUrl(searchUrl);
 	    }

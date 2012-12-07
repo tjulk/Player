@@ -1,7 +1,7 @@
 package com.baidu.player;
 
-import android.app.Activity;
+import android.support.v4.app.FragmentActivity;
 
-public class BaseActivity extends Activity{
+public class BaseActivity extends FragmentActivity{
 
 }

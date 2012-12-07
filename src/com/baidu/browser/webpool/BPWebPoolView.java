@@ -50,6 +50,11 @@ import com.baidu.webkit.sdk.BWebChromeClient.BCustomViewCallback;
 import com.baidu.webkit.sdk.BWebHistoryItem;
 import com.baidu.webkit.sdk.BWebSettings;
 import com.baidu.webkit.sdk.BWebView;
+import com.baidu.webkit.sdk.BWebSettings.BLayoutAlgorithm;
+import com.baidu.webkit.sdk.BWebSettings.BPluginState;
+import com.baidu.webkit.sdk.BWebSettings.BRenderPriority;
+import com.baidu.webkit.sdk.BWebSettings.BTextSize;
+import com.baidu.webkit.sdk.BWebSettings.BZoomDensity;
 import com.baidu.webkit.sdk.BWebView.BHitTestResult;
 import com.baidu.webkit.sdk.BWebViewClient;
 /**
@@ -227,6 +232,81 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 		// 初始化BdWebPoolView的BdWebSettings
 		BWebView initWebView = getFreeWebView();
 		BWebSettings settings = initWebView.getSettings();
+		
+		if (settings == null)
+			settings = new BWebSettings() {
+				@Override
+				protected void setTextSizeImpl(BTextSize arg0) {
+					// TODO Auto-generated method stub
+				}
+				
+				@Override
+				protected void setRenderPriorityImpl(BRenderPriority arg0) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				protected void setPluginStateImpl(BPluginState arg0) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				protected void setLayoutAlgorithmImpl(BLayoutAlgorithm arg0) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void setDefaultZoom(BZoomDensity arg0) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void setCacheMode(int arg0) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				protected Object getWebKitObj() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+				
+				@Override
+				protected BTextSize getTextSizeImpl() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+				
+				@Override
+				protected BPluginState getPluginStateImpl() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+				
+				@Override
+				protected BLayoutAlgorithm getLayoutAlgorithmImpl() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+				
+				@Override
+				public BZoomDensity getDefaultZoom() {
+					// TODO Auto-generated method stub
+					return null;
+				}
+				
+				@Override
+				public int getCacheMode() {
+					// TODO Auto-generated method stub
+					return 0;
+				}
+			};
+		
 		mSettings = settings;
 
 		// 添加前进后退的MaskView

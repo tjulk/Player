@@ -3,12 +3,12 @@ package com.baidu.browser;
 import java.util.List;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
+import android.support.v4.app.Fragment;
 import android.view.KeyEvent;
 import android.view.View;
 
@@ -27,7 +27,7 @@ import com.baidu.webkit.sdk.BValueCallback;
 public class BPBrowser extends Fragment{
 	
 	/**Fragment tag.*/
-    public static final String FRAGMENT_TAG = "Browser";
+    public static final String FRAGMENT_TAG = "BPBrowser";
     
     /** Ê×Ò³URL.*/
     public static final String HOME_PAGE = "file:///android_asset/htmls/home.html";

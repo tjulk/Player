@@ -1,4 +1,4 @@
-package com.baidu.browser.ui;
+package com.baidu.player.ui;
 
 import android.app.Activity;
 import android.content.Context;
@@ -32,6 +32,11 @@ public class HomeView extends RelativeLayout{
     
     /** 静态单实例引用 */
     private static HomeView sInstance;
+    
+    private Context mContext;
+    
+    /** 滚动区域 */
+    private HomeScrollView mHomeScrollView;
     
     /** 
      * 获得单实例的引用
@@ -87,7 +92,7 @@ public class HomeView extends RelativeLayout{
      */
     private void checkInstance(Context context) {
         if (null == sInstance) {
-        	
+        	mContext = context;
         } else {
             throw new RuntimeException("HomeView should be Single Instance.");
         }
@@ -130,6 +135,7 @@ public class HomeView extends RelativeLayout{
         if (DEBUG) {
             Log.d(TAG, "init()");
         }
+        mHomeScrollView = (HomeScrollView) findViewById(R.id.main_view);
 
     }
 
@@ -139,13 +145,11 @@ public class HomeView extends RelativeLayout{
 	}
 
 	public void onResume() {
-		// TODO Auto-generated method stub
-		
+		mHomeScrollView.requestLayout();
 	}
 
 	public void onDestroy() {
-		// TODO Auto-generated method stub
-		
+        sInstance = null;
 	}
 
 }

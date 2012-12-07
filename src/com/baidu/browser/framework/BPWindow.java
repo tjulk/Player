@@ -26,9 +26,9 @@ import com.baidu.browser.explore.BPExploreView;
 import com.baidu.browser.explore.BPExploreViewClient;
 import com.baidu.browser.explore.BPExploreViewListener;
 import com.baidu.browser.ui.BaseWebView;
-import com.baidu.browser.ui.HomeView;
 import com.baidu.browser.webpool.BPWebPoolView;
 import com.baidu.player.R;
+import com.baidu.player.ui.HomeView;
 import com.baidu.webkit.sdk.BGeolocationPermissions.BCallback;
 import com.baidu.webkit.sdk.BValueCallback;
 import com.baidu.webkit.sdk.BWebSettings;
@@ -113,7 +113,7 @@ public class BPWindow extends FrameLayout implements BPExploreViewListener{
      * @param context
      */
 	public BPWindow(Context context) {
-		super(context);
+		this(context, null, 0);
 	}
 
 	/**
@@ -562,7 +562,7 @@ public class BPWindow extends FrameLayout implements BPExploreViewListener{
      * @throws
      */
     public void showHomeView() {
-        
+    	
         ViewParent parent = mHomeView.getParent();
         if (null == parent) {
             addView(mHomeView);
@@ -741,6 +741,9 @@ public class BPWindow extends FrameLayout implements BPExploreViewListener{
 
 		@Override
 		public void onPageStarted(BPWebPoolView view, String url, Bitmap favicon) {
+			
+			System.out.println("#######################");
+			
             // ◊“≥”Î‰Ø¿¿“≥«–ªª
 		    final boolean isHomeUrl = TextUtils.equals(url, BPBrowser.HOME_PAGE);
             if (isHomeUrl) {

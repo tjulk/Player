@@ -59,37 +59,44 @@ public final class R {
         public static final int borwser_error_page=0x7f020001;
         public static final int borwser_errorpage_error=0x7f020002;
         public static final int borwser_errorpage_error_not_found=0x7f020003;
-        public static final int browser_select_btn_bg=0x7f020004;
-        public static final int browser_select_btn_bg_pressed=0x7f020005;
-        public static final int browser_select_menu_down_bg=0x7f020006;
-        public static final int browser_select_menu_up_bg=0x7f020007;
-        public static final int browser_select_separator=0x7f020008;
-        public static final int browser_webview_error_btn_selector=0x7f020009;
-        public static final int overscroll_edge=0x7f02000a;
-        public static final int overscroll_glow=0x7f02000b;
-        public static final int progress=0x7f02000c;
-        public static final int progress_thumb=0x7f02000d;
-        public static final int refurbish_nomal=0x7f02000e;
-        public static final int refurbish_pressed=0x7f02000f;
+        public static final int browser_progress_bar=0x7f020004;
+        public static final int browser_select_btn_bg=0x7f020005;
+        public static final int browser_select_btn_bg_pressed=0x7f020006;
+        public static final int browser_select_menu_down_bg=0x7f020007;
+        public static final int browser_select_menu_up_bg=0x7f020008;
+        public static final int browser_select_separator=0x7f020009;
+        public static final int browser_webview_error_btn_selector=0x7f02000a;
+        public static final int home_bg=0x7f02000b;
+        public static final int home_bg_block=0x7f02000c;
+        public static final int overscroll_edge=0x7f02000d;
+        public static final int overscroll_glow=0x7f02000e;
+        public static final int progress=0x7f02000f;
+        public static final int progress_thumb=0x7f020010;
+        public static final int refurbish_nomal=0x7f020011;
+        public static final int refurbish_pressed=0x7f020012;
     }
     public static final class id {
+        public static final int MainRoot=0x7f060013;
         public static final int bdframeview_id=0x7f060001;
         public static final int btn_wv_copy=0x7f060003;
         public static final int btn_wv_search=0x7f060005;
         public static final int dont_share_button=0x7f06000a;
-        public static final int home_panel=0x7f06000f;
+        public static final int home_panel=0x7f060010;
         public static final int homeview_id=0x7f060002;
         public static final int inner=0x7f060006;
-        public static final int main_view=0x7f060010;
+        public static final int layout_for_fragment=0x7f060014;
+        public static final int main_view=0x7f060011;
         public static final int message=0x7f060007;
-        public static final int refurbish_button=0x7f06000d;
+        public static final int refurbish_button=0x7f06000e;
         public static final int remember=0x7f060008;
+        public static final int searchbar_progress_bar=0x7f06000b;
         public static final int select_separator_one=0x7f060004;
         public static final int share_button=0x7f060009;
+        public static final int testView=0x7f060012;
         public static final int webcontent_error_code=0x7f060000;
-        public static final int webview_error_button=0x7f06000e;
-        public static final int webview_error_description_textview=0x7f06000c;
-        public static final int webview_error_imageview=0x7f06000b;
+        public static final int webview_error_button=0x7f06000f;
+        public static final int webview_error_description_textview=0x7f06000d;
+        public static final int webview_error_imageview=0x7f06000c;
     }
     public static final class layout {
         public static final int browser_copy_search_view=0x7f030000;
@@ -97,6 +104,7 @@ public final class R {
         public static final int browser_progress_bar=0x7f030002;
         public static final int browser_webview_error=0x7f030003;
         public static final int homeview=0x7f030004;
+        public static final int main=0x7f030005;
     }
     public static final class string {
         public static final int activity_not_found=0x7f080001;
