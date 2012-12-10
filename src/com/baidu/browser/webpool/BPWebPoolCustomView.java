@@ -94,12 +94,18 @@ public class BPWebPoolCustomView extends BWebView {
 
 	@Override
 	public boolean drawChild(Canvas canvas, View child, long drawingTime) {
-		return mWebPoolView.drawChild(canvas, child, drawingTime);
+		//return mWebPoolView.drawChild(canvas, child, drawingTime);
+		//TODO LEIKANG 
+		//return drawChild(canvas, child, drawingTime);
+		return super.drawChild(canvas, child, drawingTime);
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		return mWebPoolView.onTouchEvent(event);
+		//return mWebPoolView.onTouchEvent(event);
+		//TODO LEIKANG 
+		//return onTouchEvent(event);
+		return super.onTouchEvent(event);
 	}
 
 	/**

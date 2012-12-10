@@ -929,6 +929,7 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 	 *            The time at which draw is occuring
 	 * @return True if an invalidate() was issued
 	 */
+	//TODO Leikang
 	public boolean superDrawChild(Canvas canvas, View child, long drawingTime) {
 		if (mCurWebView != null) {
 			return mCurWebView.drawChild(canvas, child, drawingTime);

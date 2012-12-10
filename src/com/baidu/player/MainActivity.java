@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.view.KeyEvent;
 import android.view.WindowManager;
 
 import com.baidu.browser.BPBrowser;
@@ -31,13 +32,12 @@ public class MainActivity extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		
 	      boolean initResult = BWebKitFactory.init(this);
-
 	        if (initResult) {
 	            BWebKitFactory.destroy();
 	            boolean ret = BWebKitFactory.setEngine(BWebKitFactory.ENGINE_ORIGINAL);
+	            if (ret)
+	            	init(savedInstanceState);
 	        }
-		
-		init(savedInstanceState);
 	}
 	
 	/**
@@ -56,10 +56,10 @@ public class MainActivity extends BaseActivity {
             browser = new BPBrowser();
             browser.setRetainInstance(true);
             FragmentTransaction fragmentTransaction = manager.beginTransaction();
-            fragmentTransaction.add(browser, BPBrowser.FRAGMENT_TAG);    //不需要加到UI上
+            fragmentTransaction.add(R.id.layout_for_fragment,browser, BPBrowser.FRAGMENT_TAG);
             fragmentTransaction.commitAllowingStateLoss();
             
-            //mHandler.sendEmptyMessageDelayed(0, 2000);
+            mHandler.sendEmptyMessageDelayed(0, 2000);
         }
 	}
 	
@@ -69,8 +69,7 @@ public class MainActivity extends BaseActivity {
 	    public void handleMessage(Message msg) {
 	    	FragmentManager manager = getSupportFragmentManager();
 	    	BPBrowser browser = (BPBrowser) manager.findFragmentByTag(BPBrowser.FRAGMENT_TAG);
-	    	System.out.println("================================");
-		    browser.loadUrl("http://www.baidu.com");
+		    browser.loadUrl("http://www.baidu.com/");
 	    }
 	};
 
@@ -78,8 +77,16 @@ public class MainActivity extends BaseActivity {
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 	}
-	
-	
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		FragmentManager manager = getSupportFragmentManager();
+        BPBrowser browser = (BPBrowser) manager.findFragmentByTag(BPBrowser.FRAGMENT_TAG);
+        if (browser.onKeyDown(keyCode, event)) {
+            return true;
+        }
+		return super.onKeyDown(keyCode, event);
+	}
 
 	
 }

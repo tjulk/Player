@@ -10,7 +10,9 @@ import android.os.Bundle;
 import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.baidu.browser.framework.BPFrameView;
 import com.baidu.browser.framework.BPWindow;
@@ -20,7 +22,7 @@ import com.baidu.webkit.sdk.BValueCallback;
 
 /**
  * @ClassName: BPBrowser 
- * @Description: 浏览模块 该类负责桥接 MainActivity 与 BPFrameview ,UI线程需从该函数实现里调用 BPFrameview
+ * @Description: 浏览模块 该类负责桥接 MainActivity 与 BPFrameview ,UI线程需从该函数实现里调用 BPFrameview  
  * @author LEIKANG 
  * @date 2012-12-5 下午3:10:14
  */
@@ -106,6 +108,22 @@ public class BPBrowser extends Fragment{
 		}
 	}
 	
+	
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+	    View view = getView();
+	    if (view == null) {
+	        view = getRootView();
+	        ViewGroup parent = (ViewGroup) view.getParent();
+	        if (parent != null) {
+	            parent.removeView(view);
+	        }
+	    }
+	    return view;
+	}
+
 	/**
 	 * @Title: scrollBy 
 	 * @Description: 控制页面滚动

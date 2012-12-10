@@ -9,10 +9,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.MeasureSpec;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -21,6 +22,7 @@ import com.baidu.browser.BPBrowser;
 import com.baidu.browser.core.ui.BdPopMenuGroup;
 import com.baidu.player.R;
 import com.baidu.player.ui.FakeProgressBar;
+import com.baidu.player.ui.FloatPlayerSearchLayout;
 import com.baidu.webkit.sdk.BValueCallback;
 
 /**
@@ -71,10 +73,22 @@ public class BPFrameView extends FrameLayout{
 	private BPWindow mCurrentWindow;
 	
 	/** 搜索框高度 **/
-	private int mSearchBoxHeight;
+	private int mFloatPlayerSearchHeight;
 
 	/** 工具条高度 **/
 	private int mToolbarHeight;
+	
+	/** 工具条阴影区 **/
+	private int mToolBarShadowDis;
+	
+	/** 工具栏 **/
+	private RelativeLayout mToolbar;
+	
+	/** toolbar阴影:工具栏上面的阴影 **/
+	private ImageView mToolbarShadow;
+	
+	/** searchbox阴影:搜索框下面的阴影 **/
+	private ImageView mSearchboxShadow;
 	
 	/** 进度条高度 **/
 	private int mProgressHeight;
@@ -82,8 +96,11 @@ public class BPFrameView extends FrameLayout{
 	/** 进度条 **/
 	private FakeProgressBar mProgressBar;
 	
+	/** 搜索框架 **/
+	private FloatPlayerSearchLayout mFloatSearch;
+	
 	/** 窗口容器，用于控制窗口的切换 */
-	private BdWindowWrapper mWindowWrapper;
+	private BPWindowWrapper mWindowWrapper;
 	
 	/** Browser 主类 */
 	private BPBrowser mBrowser;
@@ -111,14 +128,34 @@ public class BPFrameView extends FrameLayout{
 	public BPFrameView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs);
 		mWindowList = new ArrayList<BPWindow>();
-		mSearchBoxHeight = context.getResources().getDimensionPixelSize(R.dimen.float_searchbox_height);
+		mFloatPlayerSearchHeight = context.getResources().getDimensionPixelSize(R.dimen.float_searchbox_height);
 		mToolbarHeight = context.getResources().getDimensionPixelSize(R.dimen.bottom_toolbar_height);
 		mProgressHeight = context.getResources().getDimensionPixelSize(R.dimen.browser_progress_bar_height);
+		mToolBarShadowDis = context.getResources().getDimensionPixelSize(R.dimen.browser_float_toolbar_shadow);
+		
+		mFloatSearch = (FloatPlayerSearchLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.float_player_search, null);
+		mFloatSearch.setEnableStartSearch(true);
+		mFloatSearch.setStopLoadingOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				stopLoading();
+			}
+		});
+		
+		addView(mFloatSearch, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,mFloatPlayerSearchHeight));
 		
 		mProgressBar = (FakeProgressBar) ((Activity) context).getLayoutInflater().inflate(R.layout.browser_progress_bar, null);
 		addView(mProgressBar, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,mProgressHeight));
-		mWindowWrapper = new BdWindowWrapper(context);
+		
+		mWindowWrapper = new BPWindowWrapper(context);
         addView(mWindowWrapper, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT));
+        
+        mToolbar = (RelativeLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.browser_toolbar, null);
+        addView(mToolbar, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, mToolbarHeight));
+        
+        mToolbarShadow = new ImageView(context);
+        mToolbarShadow.setBackgroundResource(R.drawable.float_toolbar_shadow);
+        addView(mToolbarShadow, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,mToolBarShadowDis));
 		
 	}
 	
@@ -127,14 +164,22 @@ public class BPFrameView extends FrameLayout{
 		final int width = MeasureSpec.getSize(widthMeasureSpec);
 		final int height = MeasureSpec.getSize(heightMeasureSpec);
 		final int count = getChildCount();
+		int measureTop = 0;
 		for (int i = 0; i < count; i++) {
 			final View childView = getChildAt(i);
 			if (childView.getVisibility() != GONE) {
-				if (childView.equals(mProgressBar)) {
+				if (childView.equals(mFloatSearch)) {
+					heightMeasureSpec = MeasureSpec.makeMeasureSpec(childView.getLayoutParams().height,
+							MeasureSpec.EXACTLY);
+					measureTop += childView.getLayoutParams().height;
+				} else if (childView.equals(mProgressBar)) {
 					heightMeasureSpec = MeasureSpec.makeMeasureSpec(childView.getLayoutParams().height,
 							MeasureSpec.EXACTLY);
 				} else if (childView instanceof BdPopMenuGroup) {
 					heightMeasureSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
+				} else if (childView instanceof BPWindow || childView instanceof BPWindowWrapper) {
+					heightMeasureSpec = MeasureSpec.makeMeasureSpec(height - measureTop - getToolBarHeight(),
+					        MeasureSpec.EXACTLY);
 				} else {
 					heightMeasureSpec = MeasureSpec.makeMeasureSpec(childView.getLayoutParams().height,
 							MeasureSpec.EXACTLY);
@@ -145,6 +190,18 @@ public class BPFrameView extends FrameLayout{
 		setMeasuredDimension(width, height);
 	}
 	
+	/**
+	 * @Title: getToolBarHeight 
+	 * @Description:返回工具栏高度 
+	 * @return int
+	 */
+    public int getToolBarHeight() {
+        if (mToolbar.getVisibility() == View.GONE) {
+            return 0;
+        }
+        return mToolbarHeight;
+    }
+	
 	@Override
 	protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
 		super.onLayout(changed, left, top, right, bottom);
@@ -154,15 +211,33 @@ public class BPFrameView extends FrameLayout{
 			final View childView = getChildAt(i);
 			if (childView.getVisibility() != GONE) {
 				int height = childView.getHeight();
-				if (childView instanceof ImageView) {
+				if (childView.equals(mFloatSearch)) {
+					childView.layout(0, layoutTop, getWidth(), layoutTop + height);
+					layoutTop += height;
+				} else if (childView instanceof ImageView) {
 				    childView.layout(0, layoutTop, getWidth(), layoutTop + height);
 				} else if (childView.equals(mProgressBar)) {
 					childView.layout(0, layoutTop - height / 2, getWidth(), layoutTop - height / 2 + height);
 				} else if (childView instanceof BdPopMenuGroup) {
 					childView.layout(0, 0, getWidth(), getHeight());
-				} 
+				} else if (childView.equals(mToolbar)) {
+					mToolbar.getHeight();
+					childView.layout(0, getHeight() - mToolbarHeight, getWidth(), getHeight());
+				} else {
+					childView.layout(0, layoutTop, getWidth(), getHeight() - getToolBarHeight());
+				}
 			}
 		}
+	}
+	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			if (mCurrentWindow != null && mCurrentWindow.onKeyDown(keyCode, event)) {
+				return true;
+            }
+		}
+		return false;
 	}
 
 	/**
@@ -233,7 +308,7 @@ public class BPFrameView extends FrameLayout{
 	public BPWindow createWindow(boolean focus, Bundle savedState) {
 	    RelativeLayout.LayoutParams exploreLayout = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.FILL_PARENT);
-        exploreLayout.topMargin = mSearchBoxHeight;
+        exploreLayout.topMargin = mFloatPlayerSearchHeight;
         exploreLayout.bottomMargin = mToolbarHeight;
 
         BPWindow window = new BPWindow(getContext());

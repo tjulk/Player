@@ -18,7 +18,7 @@ import com.baidu.browser.framework.BPFrameView.WindowStwitchAnimation;
  * @author LEIKANG 
  * @date 2012-12-7 下午3:33:36
  */
-public class BdWindowWrapper extends FrameLayout {
+public class BPWindowWrapper extends FrameLayout {
     /** 当前窗口 */
     private BPWindow mCurrentWindow;
     /**
@@ -35,7 +35,7 @@ public class BdWindowWrapper extends FrameLayout {
      * @param defStyle
      *            defStyle
      */
-    public BdWindowWrapper(Context context, AttributeSet attrs, int defStyle) {
+    public BPWindowWrapper(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
@@ -46,7 +46,7 @@ public class BdWindowWrapper extends FrameLayout {
      * @param attrs
      *            attrs
      */
-    public BdWindowWrapper(Context context, AttributeSet attrs) {
+    public BPWindowWrapper(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
@@ -54,7 +54,7 @@ public class BdWindowWrapper extends FrameLayout {
      * @param context
      *            context
      */
-    public BdWindowWrapper(Context context) {
+    public BPWindowWrapper(Context context) {
         super(context);
     }
 

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.RelativeLayout;
 
 import com.baidu.browser.framework.BPFrameView;
@@ -136,6 +137,13 @@ public class HomeView extends RelativeLayout{
             Log.d(TAG, "init()");
         }
         mHomeScrollView = (HomeScrollView) findViewById(R.id.main_view);
+        
+        View viewTest =  (View)mHomeScrollView.findViewById(R.id.testView);
+        
+        mHomeScrollView.spanView(viewTest, viewTest);
+        mHomeScrollView.requestLayout();
+        
+        requestLayout();
 
     }
 
@@ -145,6 +153,9 @@ public class HomeView extends RelativeLayout{
 	}
 
 	public void onResume() {
+        View viewTest =  (View)mHomeScrollView.findViewById(R.id.testView);
+        viewTest.setVisibility(View.GONE);
+        mHomeScrollView.spanView(viewTest, viewTest);
 		mHomeScrollView.requestLayout();
 	}
 

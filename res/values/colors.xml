@@ -22,5 +22,6 @@
     
     <!-- 错误页面按钮颜色 -->
     <color name="window_background_color">#fff4f4f4</color>
- 
+    
+    <drawable name="null_drawable">#00000000</drawable> 
 </resources>
