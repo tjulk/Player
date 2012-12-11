@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/app/gensoft/searchbox/!svn/ver/5868/trunk/client/android/src/com/baidu/android/ext/widget
+END
+SwipeScrollView.java
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/app/gensoft/searchbox/!svn/ver/3982/trunk/client/android/src/com/baidu/android/ext/widget/SwipeScrollView.java
+END
+SwipeCallback.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/app/gensoft/searchbox/!svn/ver/3546/trunk/client/android/src/com/baidu/android/ext/widget/SwipeCallback.java
+END
+DraggableListAdapter.java
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/app/gensoft/searchbox/!svn/ver/4150/trunk/client/android/src/com/baidu/android/ext/widget/DraggableListAdapter.java
+END
+SwipeHelper.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/app/gensoft/searchbox/!svn/ver/5426/trunk/client/android/src/com/baidu/android/ext/widget/SwipeHelper.java
+END
+SwipeAdapter.java
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/app/gensoft/searchbox/!svn/ver/3651/trunk/client/android/src/com/baidu/android/ext/widget/SwipeAdapter.java
+END
+ScrollView.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/app/gensoft/searchbox/!svn/ver/5440/trunk/client/android/src/com/baidu/android/ext/widget/ScrollView.java
+END
+PopupWindow.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/app/gensoft/searchbox/!svn/ver/5868/trunk/client/android/src/com/baidu/android/ext/widget/PopupWindow.java
+END
+SwipeListView.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/app/gensoft/searchbox/!svn/ver/5110/trunk/client/android/src/com/baidu/android/ext/widget/SwipeListView.java
+END
+VersionedHelper.java
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/app/gensoft/searchbox/!svn/ver/5407/trunk/client/android/src/com/baidu/android/ext/widget/VersionedHelper.java
+END
+DraggableListView.java
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/app/gensoft/searchbox/!svn/ver/4092/trunk/client/android/src/com/baidu/android/ext/widget/DraggableListView.java
+END

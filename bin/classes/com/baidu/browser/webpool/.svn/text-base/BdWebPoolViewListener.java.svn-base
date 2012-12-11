@@ -1,0 +1,151 @@
+/** 
+ * Filename:    BdWebPoolClient.java
+ * Description:  
+ * Copyright:   Baidu MIC Copyright(c)2011 
+ * @author:     CoCoMo 
+ * @version:    1.0
+ * Create at:   2012-4-23 下午12:17:42
+ * 
+ * Modification History: 
+ * Date         Author      Version     Description 
+ * ------------------------------------------------------------------ 
+ * 2012-4-23    CoCoMo      1.0         1.0 Version 
+ */
+package com.baidu.browser.webpool;
+
+import android.graphics.Bitmap;
+
+/**
+ * BdWebPoolView监听类
+ */
+public class BdWebPoolViewListener {
+
+	/**
+	 * 是否拦截页面加载
+	 * 
+	 * @param view
+	 *            当前加载的BdWebPoolView实例
+	 * @param url
+	 *            要拦截的Url
+	 * @return true表示拦截页面加载，自行处理；false表示不拦截，由内核处理
+	 */
+	public boolean shouldOverrideUrlLoading(BdWebPoolView view, String url) {
+		return false;
+	}
+
+	/**
+	 * 开始加载页面
+	 * 
+	 * @param view
+	 *            当前加载的BdWebPoolView实例
+	 * @param url
+	 *            开始加载的Url
+	 * @param favicon
+	 *            网站favicon图标
+	 */
+	public void onPageStarted(BdWebPoolView view, String url, Bitmap favicon) {
+	}
+
+	/**
+	 * 页面加载中
+	 * 
+	 * @param view
+	 *            当前加载的BdWebPoolView实例
+	 * @param newProgress
+	 *            加载进度
+	 */
+	public void onProgressChanged(BdWebPoolView view, int newProgress) {
+	}
+
+	/**
+	 * 收到页面标题
+	 * 
+	 * @param view
+	 *            当前加载的BdWebPoolView实例
+	 * @param title
+	 *            收到的标题
+	 */
+	public void onReceivedTitle(BdWebPoolView view, String title) {
+	}
+
+	/**
+	 * Report an error to the host application. These errors are unrecoverable
+	 * (i.e. the main resource is unavailable). The errorCode parameter
+	 * corresponds to one of the ERROR_* constants.
+	 * 
+	 * @param view
+	 *            The WebView that is initiating the callback.
+	 * @param errorCode
+	 *            The error code corresponding to an ERROR_* value.
+	 * @param description
+	 *            A String describing the error.
+	 * @param failingUrl
+	 *            The url that failed to load.
+	 */
+	public void onReceivedError(BdWebPoolView view, int errorCode, String description, String failingUrl) {
+
+	}
+
+	/**
+	 * 页面加载结束
+	 * 
+	 * @param view
+	 *            当前加载的BdWebPoolView实例
+	 * @param url
+	 *            加载结束的Url
+	 */
+	public void onPageFinished(BdWebPoolView view, String url) {
+	}
+
+	/**
+	 * 开始WebView切换
+	 * 
+	 * @param view
+	 *            当前使用的BdWebPoolView实例
+	 */
+	public void onWebViewSwitchStarted(BdWebPoolView view) {
+	}
+
+	/**
+	 * 完成WebView切换
+	 * 
+	 * @param view
+	 *            当前使用的BdWebPoolView实例
+	 */
+	public void onWebViewSwitchFinish(BdWebPoolView view) {
+	}
+
+	/**
+	 * 后退
+	 * 
+	 * @param aBackItem
+	 *            后退的BdWebPoolBackForwardListItem数据
+	 */
+	public void onGoBack(BdWebPoolBackForwardListItem aBackItem) {
+
+	}
+
+	/**
+	 * 前进
+	 * 
+	 * @param aForwardItem
+	 *            前进的BdWebPoolBackForwardListItem数据
+	 */
+	public void onGoForward(BdWebPoolBackForwardListItem aForwardItem) {
+
+	}
+
+	/**
+	 * 当浏览器状态发生改变时，触发此方法。
+	 * 
+	 * @param view
+	 *            发生改变的主View
+	 * @param changeStateMask
+	 *            状态改变标志位
+	 * @param newValue
+	 *            新值
+	 * */
+	public void onStateChanged(BdWebPoolView view, int changeStateMask, Object newValue) {
+
+	}
+}

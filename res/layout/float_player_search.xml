@@ -23,7 +23,7 @@
         android:drawableLeft="@drawable/brow_top_search"
         android:drawablePadding="5dip"
         android:clickable="true"
-        android:focusable="true"
+        android:focusable="false"
         android:gravity="center"
         android:textColor="#000000"
         android:paddingLeft="7dip"

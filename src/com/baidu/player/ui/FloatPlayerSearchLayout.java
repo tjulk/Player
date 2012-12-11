@@ -90,4 +90,9 @@ public class FloatPlayerSearchLayout extends RelativeLayout{
 		
 	}
 
+	public void updateMode() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

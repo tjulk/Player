@@ -1,0 +1,52 @@
+/** 
+ * Filename:    BdWebPoolMaskView.java
+ * Description:  
+ * Copyright:   Baidu MIC Copyright(c)2011 
+ * @author:     akalius 
+ * @version:    1.0
+ * Create at:   2012-5-25 上午2:08:10
+ * 
+ * Modification History: 
+ * Date         Author      Version     Description 
+ * ------------------------------------------------------------------ 
+ * 2012-5-25     akalius      1.0         1.0 Version 
+ */
+package com.baidu.browser.webpool;
+
+import com.baidu.browser.core.util.BdLog;
+
+import android.content.Context;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.View;
+
+/**
+ * WebpPoolView遮罩层，拦截TouchEvent，防止多View遮罩的时候，还能点击以前页面的链接
+ */
+public class BdWebPoolMaskView extends View {
+
+	/**
+	 * @param aContext
+	 *            Context
+	 */
+	public BdWebPoolMaskView(Context aContext) {
+		this(aContext, null);
+	}
+
+	/**
+	 * @param aContext
+	 *            Context
+	 * @param aAttrs
+	 *            AttributeSet
+	 */
+	public BdWebPoolMaskView(Context aContext, AttributeSet aAttrs) {
+		super(aContext, aAttrs);
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		BdLog.d("Action: " + event.getAction());
+		return true;
+	}
+
+}

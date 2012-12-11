@@ -1,0 +1,380 @@
+package com.baidu.android.ext.widget;
+//CHECKSTYLE:OFF
+import com.baidu.searchbox.R;
+
+import android.content.Context;
+import android.content.res.Configuration;
+import android.database.DataSetObserver;
+import android.graphics.Canvas;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+
+public class SwipeScrollView extends ScrollView implements SwipeCallback {
+
+    private static final String TAG = SwipeScrollView.class.getSimpleName();
+    private static final boolean DEBUG = false;
+    private LinearLayout mLinearLayout;
+    private SwipeAdapter mAdapter;
+    protected int mLastScrollPosition;
+    private SwipeHelper mSwipeHelper;
+    private SwipeScrollListener mSwipeScrollListener;
+    
+    private VersionedHelper mVersionedHelper;
+
+    public SwipeScrollView(Context context, AttributeSet attrs) {
+        super(context, attrs, 0);
+        mVersionedHelper = VersionedHelper.getInstance();
+        
+        float densityScale = getResources().getDisplayMetrics().density;
+        float pagingTouchSlop = mVersionedHelper.getScaledPagingTouchSlop(getContext());
+        mSwipeHelper = new SwipeHelper(SwipeHelper.X, this, densityScale, pagingTouchSlop);
+    }
+
+    @Override
+    public View getContentView() {
+        return this;
+    }
+    
+    private int scrollPositionOfMostRecent() {
+        return mLinearLayout.getHeight() - getHeight();
+    }
+
+    private void update() {
+//        mLinearLayout.removeAllViews();
+        // Once we can clear the data associated with individual item views,
+        // we can get rid of the removeAllViews() and the code below will
+        // recycle them.
+        for (int i = 0; i < mAdapter.getCount(); i++) {
+            View old = null;
+            if (i < mLinearLayout.getChildCount()) {
+                old = mLinearLayout.getChildAt(i);
+                old.setVisibility(View.VISIBLE);
+            }
+            final View view = mAdapter.getView(i, old, mLinearLayout);
+
+            if (old == null) {
+//                OnTouchListener noOpListener = new OnTouchListener() {
+//                    @Override
+//                    public boolean onTouch(View v, MotionEvent event) {
+//                        return true;
+//                    }
+//                };
+
+//                view.setOnClickListener(new OnClickListener() {
+//                    public void onClick(View v) {
+//                        mSwipeListener.dismiss();
+//                    }
+//                });
+                // We don't want a click sound when we dimiss recents
+                view.setSoundEffectsEnabled(false);
+
+//                OnClickListener launchAppListener = new OnClickListener() {
+//                    public void onClick(View v) {
+//                        mSwipeListener.handleOnClick(view);
+//                    }
+//                };
+
+//                final View thumbnailView = view.findViewById(R.id.app_thumbnail);
+//                OnLongClickListener longClickListener = new OnLongClickListener() {
+//                    public boolean onLongClick(View v) {
+//                        final View anchorView = view.findViewById(R.id.app_description);
+//                        mSwipeListener.handleLongPress(view, anchorView, thumbnailView);
+//                        return true;
+//                    }
+//                };
+//                thumbnailView.setClickable(true);
+//                thumbnailView.setOnClickListener(launchAppListener);
+//                thumbnailView.setOnLongClickListener(longClickListener);
+
+                // We don't want to dismiss recents if a user clicks on the app title
+                // (we also don't want to launch the app either, though, because the
+                // app title is a small target and doesn't have great click feedback)
+//                final View appTitle = view.findViewById(R.id.app_label);
+//                appTitle.setContentDescription(" ");
+//                appTitle.setOnTouchListener(noOpListener);
+//                final View calloutLine = view.findViewById(R.id.recents_callout_line);
+//                calloutLine.setOnTouchListener(noOpListener);
+                mLinearLayout.addView(view);
+            }
+        }
+        for (int i = mAdapter.getCount(); i < mLinearLayout.getChildCount(); i++) {
+            mLinearLayout.getChildAt(i).setVisibility(View.GONE);
+        }
+//        // Scroll to end after layout.
+//        post(new Runnable() {
+//            public void run() {
+//                mLastScrollPosition = scrollPositionOfMostRecent();
+//                scrollTo(0, mLastScrollPosition);
+//            }
+//        });
+    }
+    
+    @Override
+    public void draw(Canvas canvas) {
+        try {
+            super.draw(canvas);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void computeScroll() {
+        if (mSwipeScrollListener != null) {
+            mSwipeScrollListener.computeScroll();
+        }
+        super.computeScroll();
+    }
+
+    @Override
+    public void removeViewInLayout(final View view) {
+        mSwipeHelper.dismissChild(view, 0);
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        return mSwipeHelper.onInterceptTouchEvent(ev) || super.onInterceptTouchEvent(ev);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        return mSwipeHelper.onTouchEvent(ev) || super.onTouchEvent(ev);
+    }
+
+    @Override
+    public void onChildDismissed(View v) {
+        int removePos = getSwipeChildIndex(v);
+        mLinearLayout.removeView(v);
+        
+        if (removePos < 0) {
+            return;
+        }
+        
+        int insertPos = mAdapter.removeAndInsert(removePos);
+        View insertView = null;
+        if (insertPos >= 0) {
+            insertView = mAdapter.getView(insertPos, null, mLinearLayout);
+            mLinearLayout.addView(insertView, insertPos);
+        }
+    }
+
+    @Override
+    public void onBeginDrag(View v) {
+        // We do this so the underlying ScrollView knows that it won't get
+        // the chance to intercept events anymore
+        requestDisallowInterceptTouchEvent(true);
+        mVersionedHelper.setActivated(v, true);
+    }
+
+    @Override
+    public void onDragCancelled(View v) {
+        mVersionedHelper.setActivated(v, false);
+    }
+
+    @Override
+    public int getSwipeChildIndex(View v) {
+        int count = mLinearLayout.getChildCount();
+        for (int i = 0; i < count; i++) {
+            if (v == mLinearLayout.getChildAt(i)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    @Override
+    public View getSwipeChildAtPosition(int x, int y) {
+        final float absoluteX = x + getScrollX();
+        final float basoluteY = y + getScrollY();
+        int count = mLinearLayout.getChildCount();
+        for (int i = 0; i < count; i++) {
+            View item = mLinearLayout.getChildAt(i);
+            if (item.getVisibility() == View.VISIBLE
+                    && absoluteX >= item.getLeft() && absoluteX < item.getRight()
+                    && basoluteY >= item.getTop() && basoluteY < item.getBottom()) {
+                return item;
+            }
+        }
+        return null;
+    }
+    
+    @Override
+    public int getSwipeChildCount() {
+        return mAdapter.getCount();
+    }
+    
+    @Override
+    public View getSwipeChildAt(int index) {
+        if (index >= 0 && index < getSwipeChildCount()) {
+            return mLinearLayout.getChildAt(index);
+        }
+        
+        return null;
+    }
+    
+    @Override
+    public int getSwipeChildLeftAt(int index) {
+        if (index >= 0 && index < getSwipeChildCount()) {
+            return mLinearLayout.getLeft() + mLinearLayout.getChildAt(index).getLeft() - getScrollX();
+        }
+        return 0;
+    }
+    
+    @Override
+    public int getSwipeChildTopAt(int index) {
+        if (index >= 0 && index < getSwipeChildCount()) {
+            return mLinearLayout.getTop() + mLinearLayout.getChildAt(index).getTop() - getScrollY();
+        }
+        return 0;
+    }
+    
+    @Override
+    public int getSwipeFirstVisiblePosition() {
+        return getSwipeChildIndex(getSwipeChildAtPosition(0, 0));
+    }
+    
+    @Override
+    public int getSwipeLastVisiblePosition() {
+        int lastPos = getSwipeChildIndex(getSwipeChildAtPosition(getWidth() - 1, getHeight() - 1));
+        if (lastPos < 0) {
+            if (getSwipeChildCount() > 0) {
+                lastPos = getSwipeChildCount() - 1;
+            }
+        }
+        
+        return lastPos;
+    }
+
+    @Override
+    public void setSwipeScrollListener(SwipeScrollListener listener) {
+        mSwipeScrollListener = listener;
+    }
+    
+    @Override
+    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+        super.onScrollChanged(l, t, oldl, oldt);
+        if (mSwipeScrollListener != null) {
+            mSwipeScrollListener.onScrollChanged(l, t, oldl, oldt);
+        }
+    }
+    
+//    @Override
+//    protected void onOverScrolled(int scrollX, int scrollY, boolean clampedX,
+//            boolean clampedY) {
+//        super.onOverScrolled(scrollX, scrollY, clampedX, clampedY);
+//        
+//        if (mOnOverScrollListener != null) {
+//            mOnOverScrollListener.onOverScrolled(scrollX, scrollY, clampedX, clampedY);
+//        }
+//    }
+    
+//    public View getChildContentView(View v) {
+//        return v.findViewById(R.id.recent_item);
+//    }
+
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        setScrollbarFadingEnabled(true);
+        mLinearLayout = (LinearLayout) findViewById(R.id.content_linear_layout);
+//        final int leftPadding = mContext.getResources()
+//            .getDimensionPixelOffset(R.dimen.status_bar_recents_thumbnail_left_margin);
+//        setOverScrollEffectPadding(leftPadding, 0);
+        
+        mVersionedHelper.startDisappearAnimation(mLinearLayout);
+    }
+
+    @Override
+    protected void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        float densityScale = getResources().getDisplayMetrics().density;
+        mSwipeHelper.setDensityScale(densityScale);
+        float pagingTouchSlop = mVersionedHelper.getScaledPagingTouchSlop(getContext());
+        mSwipeHelper.setPagingTouchSlop(pagingTouchSlop);
+    }
+
+//    private void setOverScrollEffectPadding(int leftPadding, int i) {
+//        // TODO Add to (Vertical)ScrollView
+//    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+
+        // Skip this work if a transition is running; it sets the scroll values independently
+        // and should not have those animated values clobbered by this logic
+        if (mVersionedHelper.isTransitionRunning(mLinearLayout)) {
+            return;
+        }
+        // Keep track of the last visible item in the list so we can restore it
+        // to the bottom when the orientation changes.
+        mLastScrollPosition = scrollPositionOfMostRecent();
+
+//        // This has to happen post-layout, so run it "in the future"
+//        post(new Runnable() {
+//            public void run() {
+//                // Make sure we're still not clobbering the transition-set values, since this
+//                // runnable launches asynchronously
+//                LayoutTransition transition = mLinearLayout.getLayoutTransition();
+//                if (transition == null || !transition.isRunning()) {
+//                    scrollTo(0, mLastScrollPosition);
+//                }
+//            }
+//        });
+    }
+
+//    @Override
+//    public void onSwipeScrollViewVisibilityChanged() {
+//        if (mPerformanceHelper != null) {
+//            mPerformanceHelper.updateShowBackground();
+//        }
+//    }
+
+    @Override
+    protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        // scroll to bottom after reloading
+        if (visibility == View.VISIBLE && changedView == this) {
+            post(new Runnable() {
+                public void run() {
+                    update();
+                }
+            });
+        }
+    }
+
+    @Override
+    public void setAdapter(SwipeAdapter adapter) {
+        mAdapter = adapter;
+        mAdapter.registerDataSetObserver(new DataSetObserver() {
+            public void onChanged() {
+                update();
+            }
+
+            public void onInvalidated() {
+                update();
+            }
+        });
+        
+        mAdapter.notifyDataSetInvalidated();
+    }
+    
+    @Override
+    public SwipeAdapter getAdapter() {
+        return mAdapter;
+    }
+
+//    @Override
+//    public void setLayoutTransition(LayoutTransition transition) {
+//        if (mPerformanceHelper != null) {
+//            mPerformanceHelper.setLayoutTransitionCallback(transition);
+//        }
+//        // The layout transition applies to our embedded LinearLayout
+//        mLinearLayout.setLayoutTransition(transition);
+//    }
+    
+}
+//CHECKSTYLE:ON

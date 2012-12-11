@@ -1,0 +1,3018 @@
+/** // SUPPRESS CHECKSTYLE
+ * Filename:    BdWebPoolView.java
+ * Description:  
+ * Copyright:   Baidu MIC Copyright(c)2011 
+ * @author:     CoCoMo 
+ * @version:    1.0
+ * Create at:   2012-4-22 下午05:15:56
+ * 
+ * Modification History: 
+ * Date         Author      Version     Description 
+ * ------------------------------------------------------------------ 
+ * 2012-4-22    CoCoMo      1.0         1.0 Version 
+ */
+package com.baidu.browser.webpool;
+
+import java.io.UnsupportedEncodingException;
+import java.lang.ref.SoftReference;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Message;
+import android.text.TextUtils;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.SurfaceView;
+import android.view.View;
+import android.view.View.OnLongClickListener;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.webkit.WebView;
+import android.widget.FrameLayout;
+import android.widget.Toast;
+
+import com.baidu.browser.Browser;
+import com.baidu.browser.core.util.BdLog;
+import com.baidu.browser.webkit.BdDownloadListener;
+import com.baidu.browser.webkit.BdGeolocationPermissions;
+import com.baidu.browser.webkit.BdNoProGuard;
+import com.baidu.browser.webkit.BdSslError;
+import com.baidu.browser.webkit.BdSslErrorHandler;
+import com.baidu.browser.webkit.BdValueCallback;
+import com.baidu.browser.webkit.BdWebBackForwardList;
+import com.baidu.browser.webkit.BdWebChromeClient;
+import com.baidu.browser.webkit.BdWebChromeClient.BdCustomViewCallback;
+import com.baidu.browser.webkit.BdWebHistoryItem;
+import com.baidu.browser.webkit.BdWebJsClient;
+import com.baidu.browser.webkit.BdWebSettings;
+import com.baidu.browser.webkit.BdWebView;
+import com.baidu.browser.webkit.BdWebView.BdHitTestResult;
+import com.baidu.browser.webkit.BdWebViewClient;
+import com.baidu.browser.webkit.sys.BdSysWebView16;
+import com.baidu.browser.webpool.BdErrorView.BdErrorViewListener;
+import com.baidu.browser.webpool.BdWebPoolCustomView.LoadMode;
+import com.baidu.searchbox.R;
+import com.baidu.searchbox.SearchBox;
+import com.baidu.searchbox.database.VisitedSiteControl;
+import com.baidu.searchbox.database.VisitedSiteControl.VisitedSite;
+import com.baidu.searchbox.ui.BaseWebView;
+import com.baidu.searchbox.ui.BaseWebView.ActivityNotStartedException;
+import com.baidu.searchbox.util.BaiduIdentityManager;
+
+/**
+ * BdWebPoolView
+ */
+public class BdWebPoolView extends FrameLayout implements BdErrorViewListener, OnLongClickListener,
+		BdNoProGuard {
+
+	/** DEBUG mode */
+	private static final boolean DEBUG = false;
+
+	/** 默认池的最大size */
+	public static final int DEFAULT_MAX_POOL_SIZE = 4;
+
+	/** 标识WebView正在点击的链接 */
+	public static final String BUNDLE_CLINK_MODE = "CLINK_MODE";
+
+	/** 表示从页面内点击加载 */
+	private static final byte CLICK_FROM_PAGE = 1;
+
+	/** 标识从页面外点击加载 */
+	private static final byte CLICK_FROM_OUTSIDE_PAGE = 2;
+
+	/** 非wap1.0页面类型 */
+	public static final byte PAGE_TYPE_NORMAL = 1;
+
+	/** wap1.0页面类型 */
+	public static final byte PAGE_TYPE_WAP10 = 2;
+
+	/** 页面类型，目前包括wap1.0和其它类型 */
+	public static final String BUNDLE_PAGE_TYPE = "PAGE_TYPE";
+
+	/** 准备加载浏览页。 */
+	public static final int STATE_PAGE_STARTED = 0x01;
+	/** 加载浏览页的进度。 */
+	public static final int STATE_PROGRESS_CHANGED = 0x02;
+	/** 浏览页加载完毕。 */
+	public static final int STATE_PAGE_FINISHED = 0x04;
+	/** 浏览页开始接收。 */
+	public static final int STATE_PAGE_RECEIVED = 0x08;
+	/** 页面开始显示。 */
+	public static final int STATE_START_SHOW = 0x10;
+	/** 收到错误。 */
+	public static final int STATE_RECEIVE_ERROR = 0x20;
+
+	/** 尚未显示。 */
+	public static final int NOT_SHOW = 0;
+	/** 开始显示。 */
+	public static final int START_SHOW = 1;
+	/** 完成显示。 */
+	public static final int HAS_SHOWN = 2;
+
+	/** 进度条最小值。 */
+	public static final int PROGRESS_MIN = 10;
+	/** 进度条最大值。 */
+	public static final int PROGRESS_MAX = 100;
+	/** 延时。 */
+	public static final int DELAYED_TIME = 200;
+
+	/** 用来标识页面的显示状态。 */
+	private int mShowState;
+
+	/** BdWebPoolCustomView List */
+	private List<BdWebPoolCustomView> mWebViewList;
+	/** BdWebPoolViewClient */
+	private BdWebPoolViewClient mWebPoolViewClient;
+	/** BdWebPoolChromeClient */
+	private BdWebPoolChromeClient mWebPoolChromeClient;
+
+	/** 当前的BdWebPoolCustomView */
+	private BdWebPoolCustomView mCurWebView;
+
+	/** 池的最大size */
+	private int mMaxPoolSize = DEFAULT_MAX_POOL_SIZE;
+
+	//<removed by qumiao 2012.9.18 BEGIN
+    //使用单WebView，让其自己控制前进后退历史列表
+//	/** 多WebView的前进后退列表 */
+//	private BdWebPoolBackForwardList mBackForwardList;
+	//removed by qumiao 2012.9.18 END>
+	
+	/** 多View的遮罩View */
+	private BdWebPoolMaskView mMaskView;
+
+	/** WebView设置 */
+	private BdWebSettings mSettings;
+
+	/** Attached Javascript interfaces */
+	private Map<String, Object> mJsItems;
+
+	/** 回调通知上层的底层BdWebPoolCustomView是否是当前的BdWebPoolCustomView */
+	private boolean mCurWebViewNotify;
+
+	/** 错误页对照表。 */
+	private HashMap<Integer, Integer> mErrorCodeList = new HashMap<Integer, Integer>();
+
+	/** 显示的错误页。 */
+	private BdErrorView mErrorView;
+
+	/** 下载监听器 */
+	private BdDownloadListener mDownloadListener;
+
+	/**访问的站点。只用一个实例，以方便只对部分内容（比如title）更新。*/
+    private VisitedSite mVisitedSite = new VisitedSite();
+    
+    
+    // <add begin by caohaitao 20120907, 解决视频播放不能全屏问题。
+    // custom view related
+    
+    /** webview custom view.  */
+    private View mCustomView;
+    
+    /** custom view 对应的全屏 container. */
+    protected FrameLayout mFullscreenContainer;
+    
+    /** 全屏之前activity的 orientation. */
+    private int mOriginalOrientation;
+    
+    /** customview callback. */
+    private BdCustomViewCallback mCustomViewCallback;
+    
+    /** custom view layout param. */
+    protected static final FrameLayout.LayoutParams COVER_SCREEN_PARAMS =
+        new FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT);
+    
+    // add end by caohaitao 20120907>
+
+    
+	/**
+	 * Constructor
+	 * 
+	 * @param aContext
+	 *            Context
+	 */
+	public BdWebPoolView(Context aContext) {
+		this(aContext, null);
+	}
+
+	/**
+	 * Constructor
+	 * 
+	 * @param aContext
+	 *            Context
+	 * @param aAttrs
+	 *            AttributeSet
+	 */
+	public BdWebPoolView(Context aContext, AttributeSet aAttrs) {
+		this(aContext, aAttrs, 0);
+	}
+
+	/**
+	 * Constructor
+	 * 
+	 * @param aContext
+	 *            Context
+	 * @param aAttrs
+	 *            AttributeSet
+	 * @param aDefStyle
+	 *            DefaultStyle
+	 */
+	public BdWebPoolView(Context aContext, AttributeSet aAttrs, int aDefStyle) {
+		this(aContext, null, 0, DEFAULT_MAX_POOL_SIZE);
+	}
+
+	/**
+	 * @param aMaxPoolSize
+	 *            池的最大size
+	 * @param aContext
+	 *            Context
+	 * @param aAttrs
+	 *            AttributeSet
+	 * @param aDefStyle
+	 *            DefaultStyle
+	 */
+	public BdWebPoolView(Context aContext, AttributeSet aAttrs, int aDefStyle, int aMaxPoolSize) {
+		super(aContext, aAttrs, aDefStyle);
+
+		setBackgroundColor(Color.WHITE);
+
+		mMaxPoolSize = aMaxPoolSize;
+		mWebViewList = new ArrayList<BdWebPoolCustomView>(DEFAULT_MAX_POOL_SIZE);
+		//<removed by qumiao 2012.9.18 BEGIN
+        //使用单WebView，让其自己控制前进后退历史列表
+//		mBackForwardList = new BdWebPoolBackForwardList();
+		//removed by qumiao 2012.9.18 END>
+		
+		// 初始化BdWebPoolView的BdWebSettings
+		BdWebView initWebView = getFreeWebView();
+		BdWebSettings settings = initWebView.getSettings();
+		mSettings = settings.clone();
+		mSettings.attach(settings);
+
+		// 添加前进后退的MaskView
+		mMaskView = new BdWebPoolMaskView(aContext);
+		mMaskView.setBackgroundColor(Color.WHITE);
+		mMaskView.setVisibility(GONE);
+		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
+				FrameLayout.LayoutParams.MATCH_PARENT);
+		addView(mMaskView, params);
+	}
+
+	/**
+	 * Set the WebViewClient that will receive various notifications and
+	 * requests. This will replace the current handler.
+	 * 
+	 * @param aClient
+	 *            An implementation of BdWebPoolViewClient.
+	 */
+	public void setWebViewClient(BdWebPoolViewClient aClient) {
+		mWebPoolViewClient = aClient;
+	}
+
+	/**
+	 * Set the chrome handler. This is an implementation of WebChromeClient for
+	 * use in handling Javascript dialogs, favicons, titles, and the progress.
+	 * This will replace the current handler.
+	 * 
+	 * @param aClient
+	 *            An implementation of BdWebPoolChromeClient.
+	 */
+	public void setWebChromeClient(BdWebPoolChromeClient aClient) {
+		mWebPoolChromeClient = aClient;
+	}
+
+	/**
+	 * Use this function to bind an object to Javascript so that the methods can
+	 * be accessed from Javascript.
+	 * <p>
+	 * <strong>IMPORTANT:</strong>
+	 * <ul>
+	 * <li>Using addJavascriptInterface() allows JavaScript to control your
+	 * application. This can be a very useful feature or a dangerous security
+	 * issue. When the HTML in the WebView is untrustworthy (for example, part
+	 * or all of the HTML is provided by some person or process), then an
+	 * attacker could inject HTML that will execute your code and possibly any
+	 * code of the attacker's choosing.<br>
+	 * Do not use addJavascriptInterface() unless all of the HTML in this
+	 * WebView was written by you.</li>
+	 * <li>The Java object that is bound runs in another thread and not in the
+	 * thread that it was constructed in.</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param obj
+	 *            The class instance to bind to Javascript
+	 * @param interfaceName
+	 *            The name to used to expose the class in Javascript
+	 */
+	public void addJavascriptInterface(Object obj, String interfaceName) {
+		if (mJsItems == null) {
+			mJsItems = new HashMap<String, Object>();
+		}
+		if (mJsItems.containsKey(interfaceName)) {
+			mJsItems.remove(interfaceName);
+		}
+		mJsItems.put(interfaceName, obj);
+
+		for (BdWebView webView : mWebViewList) {
+			webView.addJavascriptInterface(obj, interfaceName);
+		}
+	}
+
+	/**
+	 * Return the WebSettings object used to control the settings for this
+	 * WebView.
+	 * 
+	 * @return A WebSettings object that can be used to control this WebView's
+	 *         settings.
+	 */
+	public BdWebSettings getSettings() {
+		return mSettings;
+	}
+
+	/**
+	 * Load the given url.
+	 * 
+	 * @param aUrl
+	 *            The url of the resource to load.
+	 */
+	public void loadUrl(String aUrl) {
+		Bundle extra = new Bundle();
+		extra.putByte(BUNDLE_CLINK_MODE, CLICK_FROM_OUTSIDE_PAGE);
+		extra.putByte(BdWebPoolView.BUNDLE_PAGE_TYPE, BdWebPoolView.PAGE_TYPE_NORMAL);
+		loadUrl(aUrl, extra);
+	}
+
+	/**
+	 * 获取当前WebView的Url
+	 * 
+	 * @return 获取当前页面的Url
+	 */
+	public String getUrl() {
+		if (mCurWebView != null) {
+			return mCurWebView.getUrl();
+		} else {
+			return "";
+		}
+	}
+	
+	/**
+     * Gets a new picture that captures the current display of this WebView.
+     * This is a copy of the display, and will be unaffected if this WebView
+     * later loads a different URL.
+     *
+     * @return a picture containing the current contents of this WebView. Note
+     *         this picture is of the entire document, and is not restricted to
+     *         the bounds of the view.
+     */
+    public android.graphics.Picture capturePicture() {
+        if (mCurWebView != null) {
+            return mCurWebView.capturePicture();
+        } else {
+            return null;
+        }
+    }
+    
+    /**
+     * Return the scrolled left position of this view. This is the left edge of
+     * the displayed part of your view. You do not need to draw any pixels
+     * farther left, since those are outside of the frame of your view on
+     * screen.
+     *
+     * @return The left edge of the displayed part of your view, in pixels.
+     */
+    public int getWebViewScrollX() {
+        if (mCurWebView != null) {
+            return mCurWebView.getScrollX();
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * 得到实际使用的WebView
+     * @return webview
+     */
+    public View getWebView() {
+        if (mCurWebView != null) {
+            return mCurWebView.getWebView();
+        } else {
+            return null;
+        }
+    }
+    
+    /**
+     * Return the scrolled top position of this view. This is the top edge of
+     * the displayed part of your view. You do not need to draw any pixels above
+     * it, since those are outside of the frame of your view on screen.
+     *
+     * @return The top edge of the displayed part of your view, in pixels.
+     */
+    public int getWebViewScrollY() {
+        if (mCurWebView != null) {
+            return mCurWebView.getScrollY();
+        } else {
+            return 0;
+        }
+    }
+	/**
+	 * Reload the current url.
+	 */
+	public void reload() {
+		if (mCurWebView != null) {
+			mCurWebView.setLoadMode(LoadMode.LOAD_RELOAD);
+			mCurWebView.reload();
+		}
+		if (mWebPoolViewClient != null) {
+			mWebPoolViewClient.onReload(this);
+		}
+	}
+
+	/**
+	 * Stop the current load.
+	 */
+	public void stopLoading() {
+		if (mCurWebView != null) {
+			mCurWebView.stopLoading();
+		}
+	}
+
+	/**
+	 * Tell the WebView to clear its internal back/forward list.
+	 */
+	public void clearHistory() {
+		for (BdWebPoolCustomView webview : mWebViewList) {
+			webview.setHistoryCount(0);
+			webview.clearHistory();
+		}
+		//<removed by qumiao 2012.9.18 BEGIN
+        //使用单WebView，让其自己控制前进后退历史列表
+//		mBackForwardList.clear();
+		//removed by qumiao 2012.9.18 END>
+	}
+
+	/**
+	 * Call this to inform the view that memory is low so that it can free any
+	 * available memory.
+	 */
+	public void freeMemory() {
+		BdLog.w("");
+		for (BdWebPoolCustomView webview : mWebViewList) {
+			webview.freeMemory();
+		}
+	}
+
+	/**
+	 * Use this method to put the WebView into text selection mode. Do not rely
+	 * on this functionality; it will be deprecated in the future.
+	 */
+	public void emulateShiftHeld() {
+		if (mCurWebView != null) {
+			mCurWebView.emulateShiftHeld();
+		}
+	}
+
+	/**
+	 * 清除WebPoolView内容
+	 */
+	public void clear() {
+		while (mWebViewList.size() > 0) {
+			BdWebView webview = mWebViewList.get(0);
+			webview.stopLoading();
+			webview.getWebView().clearFocus();
+			webview.clearView();
+			webview.clearHistory();
+			webview.destroy();
+			mWebViewList.remove(0);
+		}
+	}
+
+	/**
+	 * clearView
+	 */
+	public void clearView() {
+		if (mCurWebView != null) {
+			mCurWebView.clearView();
+		}
+	}
+
+	/**
+	 * 是否能够前进后退指定步数
+	 * 
+	 * @param aSteps
+	 *            The negative or positive number of steps to move the history.
+	 * @return 是否能够前进或者后退指定的步数
+	 */
+	public boolean canGoBackOrForward(int aSteps) {
+	    //<modified by qumiao 2012.9.18 BEGIN
+        //使用单WebView，让其自己控制前进后退历史列表
+//		return mBackForwardList.canGoBackOrForward(aSteps);
+	    if (mCurWebView != null) {
+	        return mCurWebView.canGoBackOrForward(aSteps);
+	    }
+	    
+	    return false;
+	    //modified by qumiao 2012.9.18 END>
+	}
+
+	/**
+	 * 是否可以后退
+	 * 
+	 * @return 能够后退返回true，否则返回false
+	 */
+	public boolean canGoBack() {
+		return canGoBackOrForward(-1);
+	}
+
+	/**
+	 * 是否能够前进
+	 * 
+	 * @return 能够前进返回true，否则返回false
+	 */
+	public boolean canGoForward() {
+		return canGoBackOrForward(1);
+	}
+
+	/**
+	 * 后退
+	 */
+	public void goBack() {
+	    //<modified by qumiao 2012.9.18 BEGIN
+        //使用单WebView，让其自己控制前进后退历史列表
+//		if (DEBUG) {
+//			BdLog.d(this.toString());
+//			BdLog.d(mBackForwardList.toString());
+//		}
+//		BdWebPoolBackForwardListItem backItem = null;
+//		if (canGoBack()) {
+//			// 1. 检查当前item
+//			checkCurItem();
+//			// 2. 获取后退的item
+//			int curIndex = mBackForwardList.getCurIndex();
+//			BdLog.d("curIndex: " + curIndex);
+//			backItem = getPreItem(curIndex);
+//			// 3. 切换到后退的item
+//			if (backItem != null) {
+//				int toIndex = mBackForwardList.getItemIndex(backItem);
+//				goToItem(curIndex, toIndex);
+//			} else {
+//				BdLog.w("can not find back item in cur pos " + curIndex);
+//			}
+//		} else {
+//			BdLog.v("can not goback.");
+//		}
+//
+//		if (mWebPoolViewClient != null) {
+//			mWebPoolViewClient.onGoBack(backItem);
+//		}
+        if (mCurWebView != null) {
+            mCurWebView.goBack();
+            // 4.0以上版本前进后退强制翻页，解决白屏问题 bugfix#SEARHBOX-859
+            if (Build.VERSION.SDK_INT >= 14) {
+                if (mCurWebView.scrollUp()) {
+                    mCurWebView.scrollDown();
+                }
+            }
+        }
+	    //modified by qumiao 2012.9.18 END>
+	}
+
+	/**
+	 * 前进
+	 */
+	public void goForward() {
+	    //<modified by qumiao 2012.9.18 BEGIN
+        //使用单WebView，让其自己控制前进后退历史列表
+//		if (DEBUG) {
+//			BdLog.d(this.toString());
+//			BdLog.d(mBackForwardList.toString());
+//		}
+//		BdWebPoolBackForwardListItem forwardItem = null;
+//		if (canGoForward()) {
+//			// 1. 获取前进的item
+//			int curIndex = mBackForwardList.getCurIndex();
+//			BdLog.d("curIndex: " + curIndex);
+//			forwardItem = getNextItem(curIndex);
+//			// 2. 切换到前进的item
+//			if (forwardItem != null) {
+//				int toIndex = mBackForwardList.getItemIndex(forwardItem);
+//				goToItem(curIndex, toIndex);
+//			} else {
+//				BdLog.w("can not find forward item in pos " + curIndex);
+//			}
+//		} else {
+//			BdLog.v("can not goforward.");
+//		}
+//
+//		if (mWebPoolViewClient != null) {
+//			mWebPoolViewClient.onGoForward(forwardItem);
+//		}
+	    if (mCurWebView != null) {
+	        mCurWebView.goForward();
+            // 4.0以上版本前进后退强制翻页，解决白屏问题 bugfix#SEARHBOX-859
+	        if (Build.VERSION.SDK_INT >= 14) {
+                if (mCurWebView.scrollUp()) {
+                    mCurWebView.scrollDown();
+                }
+            }
+	    }
+	    //modified by qumiao 2012.9.18 END>
+	}
+
+	/**
+	 * 获取当前列表位置
+	 * 
+	 * @return 返回当前列表位置
+	 */
+	public int getCurIndex() {
+	    //<modified by qumiao 2012.9.18 BEGIN
+        //使用单WebView，让其自己控制前进后退历史列表
+//		return mBackForwardList.getCurIndex();
+	    if (mCurWebView != null) {
+	        mCurWebView.copyBackForwardList().getCurrentIndex();
+	    }
+	    
+	    return -1;
+	    //modified by qumiao 2012.9.18 END>
+	}
+
+	/**
+	 * 获取当前列表Url
+	 * 
+	 * @return 返回当前列表Url
+	 */
+	public String getCurUrl() {
+		String curUrl = null;
+		//<modified by qumiao 2012.9.18 BEGIN
+        //使用单WebView，让其自己控制前进后退历史列表
+//		BdWebPoolBackForwardListItem curItem = null;
+//		try {
+//			curItem = mBackForwardList.getCurItem();
+//		} catch (Exception e) {
+//			BdLog.w(e.getMessage());
+//		}
+        BdWebHistoryItem curItem = null;
+        try {
+            curItem = mCurWebView.copyBackForwardList().getCurrentItem();
+        } catch (Exception e) {
+            BdLog.w(e.getMessage());
+        }
+        //modified by qumiao 2012.9.18 END>
+        
+		if (curItem != null) {
+			curUrl = curItem.getUrl();
+		}
+		return curUrl;
+	}
+
+	/**
+	 * Add or remove a title bar to be embedded into the WebView, and scroll
+	 * along with it vertically, while remaining in view horizontally. Pass null
+	 * to remove the title bar from the WebView, and return to drawing the
+	 * WebView normally without translating to account for the title bar.
+	 * 
+	 * @param aView
+	 *            标题栏View
+	 */
+	public void setEmbeddedTitleBar(View aView) {
+		if (mCurWebView != null) {
+		    Class<?> webviewClass = mCurWebView.getSysWebViewClass();
+		    if (webviewClass != null 
+		            && webviewClass.equals(BdSysWebView16.class)) {
+		        addTitleForJellyBean(aView);
+		    } else {
+		        mCurWebView.setEmbeddedTitleBar(aView);
+		    }
+		}
+	}
+
+	private void addTitleForJellyBean(View view) {
+        //<add by fujiaxing 20120724 BEGIN
+       final String TAG = "DING";
+       if (view != null) {
+           FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                   FrameLayout.LayoutParams.MATCH_PARENT,
+                   FrameLayout.LayoutParams.WRAP_CONTENT);
+           addView(view, params);
+           view.setTag(TAG);
+       } else { // 删除增加的view
+           View child = null;
+           Object tag = null;
+           int count = getChildCount();
+           for (int i = count - 1; i >= 0; i--) {
+               child = getChildAt(i);
+               tag = child.getTag();
+               if (tag != null && tag instanceof String) {
+                   if (TAG.equals((String) tag)) {
+                       removeView(child);
+                   }
+               }
+           }
+       }
+       //add by fujiaxing 20120724 END>
+       mCurWebView.setEmbeddedTitleBar(view);
+	}
+	
+	/**
+	 * 如果是网址刚打开该网页，否则打开百度搜索页面
+	 * 
+	 * @param aUrl
+	 *            要访问的url或要搜索的关键词
+	 * @return 新的url
+	 */
+	public String composeUrl(String aUrl) {
+		String searchUrl = "http://m.baidu.com/ssid=0/from=0/bd_page_type=1/uid=wiaui_1298960413_1175/s?tn=iphone&st=11104i&tj=i_sbtn0&pu=sz%401320_480&word=";// SUPPRESS
+																																								// CHECKSTYLE
+		String newUrl = aUrl;
+		if (aUrl != null && aUrl.length() > 0) {
+			if ((!aUrl.startsWith("http://")) && (!aUrl.startsWith("https://"))
+					&& (!aUrl.startsWith("ftp://")) && (!aUrl.startsWith("rtsp://"))
+					&& (!aUrl.startsWith("mms://"))) {
+				newUrl = "http://" + aUrl;
+			}
+			// 不是url，则搜索
+			if (!checkStrIsUrl(newUrl)) {
+				try {
+					newUrl = searchUrl + URLEncoder.encode(aUrl, "gbk");
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return newUrl;
+	}
+
+	/**
+	 * 复制接口
+	 * 
+	 * @return true表示复制成功
+	 */
+	public boolean commitCopy() {
+		if (mCurWebView != null) {
+			return mCurWebView.commitCopy();
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * nativeGetSelection方法
+	 * 
+	 * @return 选中的字符串
+	 */
+	public String getSelection() {
+		if (mCurWebView != null) {
+			return mCurWebView.getSelection();
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * 获取WebView的mExtendSelection值
+	 * 
+	 * @return mExtendSelection值
+	 */
+	public boolean getExtendSelection() {
+		if (mCurWebView != null) {
+			return mCurWebView.getExtendSelection();
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 设置WebView的mExtendSelection值
+	 * 
+	 * @param aExtendSelection
+	 *            新的mExtendSelection属性值
+	 * @return true表示设置成功，反之亦然
+	 */
+	public boolean setExtendSelection(boolean aExtendSelection) {
+		if (mCurWebView != null) {
+			return mCurWebView.setExtendSelection(aExtendSelection);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 获取WebView的mSelectingText值
+	 * 
+	 * @return mSelectingText值
+	 */
+	public boolean getSelectingText() {
+		if (mCurWebView != null) {
+			return mCurWebView.getSelectingText();
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 设置WebView的mSelectingText值
+	 * 
+	 * @param aSelectingText
+	 *            新的mSelectingText属性值
+	 * @return true表示设置成功，反之亦然
+	 */
+	public boolean setSelectingText(boolean aSelectingText) {
+		if (mCurWebView != null) {
+			return mCurWebView.setSelectingText(aSelectingText);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 获取WebView的mDrawSelectionPointer值
+	 * 
+	 * @return mDrawSelectionPointer值
+	 */
+	public boolean getDrawSelectionPointer() {
+		if (mCurWebView != null) {
+			return mCurWebView.getDrawSelectionPointer();
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 设置WebView的aDrawSelectionPointer值
+	 * 
+	 * @param aDrawSelectionPointer
+	 *            新的aDrawSelectionPointer属性值
+	 * @return true表示设置成功，反之亦然
+	 */
+	public boolean setDrawSelectionPointer(boolean aDrawSelectionPointer) {
+		if (mCurWebView != null) {
+			return mCurWebView.setDrawSelectionPointer(aDrawSelectionPointer);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 获取WebView的mShiftIsPressed值
+	 * 
+	 * @return mExtendSelection值
+	 */
+	public boolean getShiftIsPressed() {
+		if (mCurWebView != null) {
+			return mCurWebView.getShiftIsPressed();
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 设置WebView的mShiftIsPressed值
+	 * 
+	 * @param aShiftIsPressed
+	 *            新的mShiftIsPressed属性值
+	 * @return true表示设置成功，反之亦然
+	 */
+	public boolean setShiftIsPressed(boolean aShiftIsPressed) {
+		if (mCurWebView != null) {
+			return mCurWebView.setShiftIsPressed(aShiftIsPressed);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 获取WebView的mTouchSelection值
+	 * 
+	 * @return mTouchSelection值
+	 */
+	public boolean getTouchSelection() {
+		if (mCurWebView != null) {
+			return mCurWebView.getTouchSelection();
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * @return the mCurWebViewNotify
+	 */
+	public boolean isCurWebViewNotify() {
+		return mCurWebViewNotify;
+	}
+
+	/**
+	 * 设置WebView的mTouchSelection值
+	 * 
+	 * @param aTouchSelection
+	 *            新的mTouchSelection属性值
+	 * @return true表示设置成功，反之亦然
+	 */
+	public boolean setTouchSelection(boolean aTouchSelection) {
+		if (mCurWebView != null) {
+			return mCurWebView.setTouchSelection(aTouchSelection);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * 获取BdHitTestResult
+	 * 
+	 * @return BdHitTestResult实例
+	 */
+	public BdHitTestResult getHitTestResult() {
+		if (mCurWebView != null) {
+			return mCurWebView.getHitTestResult();
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Call this view's OnLongClickListener, if it is defined. Invokes the
+	 * context menu if the OnLongClickListener did not consume the event.
+	 * 
+	 * @return True if one of the above receivers consumed the event, false
+	 *         otherwise.
+	 */
+	public boolean performLongClick() {
+		return superPerformLongClick();
+	}
+
+	/**
+	 * Super performLongClick
+	 * 
+	 * @return True if one of the above receivers consumed the event, false
+	 *         otherwise.
+	 */
+	public boolean superPerformLongClick() {
+		if (mCurWebView != null) {
+			return mCurWebView.superPerformLongClick();
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Draw one child of this View Group. This method is responsible for getting
+	 * the canvas in the right state. This includes clipping, translating so
+	 * that the child's scrolled origin is at 0, 0, and applying any animation
+	 * transformations.
+	 * 
+	 * @param canvas
+	 *            The canvas on which to draw the child
+	 * @param child
+	 *            Who to draw
+	 * @param drawingTime
+	 *            The time at which draw is occuring
+	 * @return True if an invalidate() was issued
+	 */
+	public boolean drawChild(Canvas canvas, View child, long drawingTime) {
+		if (child.getClass().getName().equals("com.adobe.flashplayer.FlashPaintSurface")) {
+			SurfaceView flashSurface = (SurfaceView) child;
+			flashSurface.setZOrderOnTop(false);
+		}
+		return superDrawChild(canvas, child, drawingTime);
+	}
+
+	/**
+	 * Super drawChild
+	 * 
+	 * @param canvas
+	 *            The canvas on which to draw the child
+	 * @param child
+	 *            Who to draw
+	 * @param drawingTime
+	 *            The time at which draw is occuring
+	 * @return True if an invalidate() was issued
+	 */
+	public boolean superDrawChild(Canvas canvas, View child, long drawingTime) {
+		if (mCurWebView != null) {
+			return mCurWebView.superDrawChild(canvas, child, drawingTime);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Implement this method to handle touch screen motion events.
+	 * 
+	 * @param event
+	 *            The motion event.
+	 * @return True if the event was handled, false otherwise.
+	 */
+	public boolean onTouchEvent(MotionEvent event) {
+		return superOnTouchEvent(event);
+	}
+	
+	   
+    // <add begin by caohaitao 20120907, 解决视频播放不能全屏问题。
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (mCustomView != null) {
+                hideCustomView();
+                return true;
+            }
+        }
+        
+        return super.onKeyDown(keyCode, event);
+    }
+    // add end>
+
+
+
+	/**
+	 * Super onTouchEvent
+	 * 
+	 * @param event
+	 *            The motion event.
+	 * @return True if the event was handled, false otherwise.
+	 */
+	public boolean superOnTouchEvent(MotionEvent event) {
+		if (mCurWebView != null) {
+			return mCurWebView.superOnTouchEvent(event);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Return the scrolled left position of this view. This is the left edge of
+	 * the displayed part of your view. You do not need to draw any pixels
+	 * farther left, since those are outside of the frame of your view on
+	 * screen.
+	 * 
+	 * @return The left edge of the displayed part of your view, in pixels.
+	 */
+	public int getCurScrollX() {
+		if (mCurWebView != null) {
+			View view = mCurWebView.getWebView();
+			return view.getScrollX();
+		} else {
+			return -1;
+		}
+	}
+
+	/**
+	 * Return the scrolled top position of this view. This is the top edge of
+	 * the displayed part of your view. You do not need to draw any pixels above
+	 * it, since those are outside of the frame of your view on screen.
+	 * 
+	 * @return The top edge of the displayed part of your view, in pixels.
+	 */
+	public final int getCurScrollY() {
+		if (mCurWebView != null) {
+			View view = mCurWebView.getWebView();
+			return view.getScrollY();
+		} else {
+			return -1;
+		}
+	}
+
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		for (BdWebView webView : mWebViewList) {
+			sb.append(getWebViewDebugInfo(webView));
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * 获取错误码
+	 * 
+	 * @return 错误码
+	 */
+	public int getErrorCode() {
+		Integer errorCode = null;
+		if (mCurWebView != null) {
+			BdWebBackForwardList list = mCurWebView.copyBackForwardList();
+			errorCode = mErrorCodeList.get(list.getCurrentIndex());
+		}
+		return errorCode == null ? 0 : errorCode;
+	}
+
+	/**
+	 * 设置错误码
+	 * 
+	 * @param errorCode
+	 *            错误码
+	 */
+	public void setErrorCode(int errorCode) {
+		if (mCurWebView != null) {
+			BdWebBackForwardList list = mCurWebView.copyBackForwardList();
+			mErrorCodeList.put(list.getCurrentIndex(), errorCode);
+		}
+	}
+
+	/**
+	 * 隐藏WebContent的错误页。
+	 */
+	public void hideErrorPage() {
+		View errorView = mErrorView;
+		if (errorView != null) {
+			ViewGroup parent = (ViewGroup) errorView.getParent();
+			if (parent != null) {
+				parent.removeView(errorView);
+			}
+		}
+	}
+
+	/**
+	 * 显示WebContent的错误页。
+	 */
+	public void showErrorPage() {
+		int errorCode = getErrorCode();
+		if (errorCode == 0) {
+			hideErrorPage();
+			return;
+		}
+
+		BdErrorView errorView = mErrorView;
+
+		if (errorView == null) {
+			LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
+					Context.LAYOUT_INFLATER_SERVICE);
+			errorView = (BdErrorView) inflater.inflate(R.layout.browser_webview_error, null);
+			mErrorView = errorView;
+			errorView.setErrorCode(errorCode);
+			errorView.setAttachedFixedWebView(this);
+			errorView.setEventListener(this);
+		}
+
+		ViewGroup oldParent = (ViewGroup) errorView.getParent();
+		if (oldParent != null) {
+			oldParent.removeView(errorView);
+		}
+		ViewGroup newParent = (ViewGroup) getParent();
+		ViewGroup.LayoutParams params = getLayoutParams();
+		newParent.addView(errorView, params);
+	}
+
+	/**
+	 * 获取页面显示状态。有NOT_SHOW, START_SHOW和HAS_SHOWN三种状态。
+	 * 
+	 * @return 显示状态。
+	 */
+	public int getShowState() {
+		return mShowState;
+	}
+
+	/**
+	 * 设置页面显示状态。有NOT_SHOW, START_SHOW和HAS_SHOWN三种状态。
+	 * 
+	 * @param showState
+	 *            显示状态。
+	 */
+	public void setShowState(int showState) {
+		mShowState = showState;
+	}
+
+	/**
+	 * Set the scrolled position of your view. This will cause a call to
+	 * {@link #onScrollChanged(int, int, int, int)} and the view will be
+	 * invalidated.
+	 * 
+	 * @param x
+	 *            the x position to scroll to
+	 * @param y
+	 *            the y position to scroll to
+	 */
+	public void scrollTo(int x, int y) {
+		if (mCurWebView != null) {
+			mCurWebView.getWebView().scrollTo(x, y);
+		}
+	}
+
+	/**
+	 * Move the scrolled position of your view. This will cause a call to
+	 * {@link #onScrollChanged(int, int, int, int)} and the view will be
+	 * invalidated.
+	 * 
+	 * @param x
+	 *            the amount of pixels to scroll by horizontally
+	 * @param y
+	 *            the amount of pixels to scroll by vertically
+	 */
+	public void scrollBy(int x, int y) {
+		if (mCurWebView != null) {
+			mCurWebView.getWebView().scrollBy(x, y);
+		}
+	}
+
+	/**
+	 * Register the interface to be used when content can not be handled by the
+	 * rendering engine, and should be downloaded instead. This will replace the
+	 * current handler.
+	 * 
+	 * @param listener
+	 *            An implementation of DownloadListener.
+	 */
+	public void setDownloadListener(BdDownloadListener listener) {
+		for (BdWebPoolCustomView webview : mWebViewList) {
+			webview.setDownloadListener(listener);
+		}
+		mDownloadListener = listener;
+	}
+
+	/**
+	 * Get the title for the current page. This is the title of the current page
+	 * until WebViewClient.onReceivedTitle is called.
+	 * 
+	 * @return The title for the current page.
+	 */
+	public String getTitle() {
+		if (mCurWebView != null) {
+			return mCurWebView.getTitle();
+		} else {
+			return "";
+		}
+	}
+
+	@Override
+	public void onErrorPageGoBack() {
+		goBack();
+	}
+
+	@Override
+	public void onErrorPageRefresh() {
+		reload();
+	}
+
+	/**
+     * 保存状态。
+     * @param savedState Bundle.
+     */
+    public void saveStateToBundle(Bundle savedState) {
+        if (savedState == null || mCurWebView == null) {
+            return;
+        }
+        
+        mCurWebView.saveState(savedState);
+    }
+    
+    /**
+     * 恢复状态。
+     * @param savedState Bundle.
+     */
+    public void restoreFromBundle(Bundle savedState) {
+        if (savedState == null || mCurWebView == null) {
+            return;
+        }
+        
+        mCurWebView.restoreState(savedState);
+    }
+    
+	/**
+	 * 获取一个可用的BdWebview
+	 * 
+	 * @param aClickMode
+	 *            点击模式
+	 * @return BdWebview实例
+	 */
+	private BdWebPoolCustomView getAvailableWebView(byte aClickMode) {
+		// 1. 第一次加载，使用初始化的WebView
+		if (mCurWebView == null) {
+			return getWebViewByPos(0);
+		} else {
+			// 2.1. 页面内加载
+			// 判断当前webview的历史记录是否有增长，如果有，则使用下一个webview加载，否则说明是重定向过来的，使用当前webview加载
+			if (aClickMode == CLICK_FROM_PAGE) {
+				// 2.1.1 使用当前webview
+				if (isRedirectLoad()) {
+					BdLog.v("the request is redirect, use current webview to load it.");
+					return mCurWebView;
+				} else {
+					// 2.1.2 新开webview
+					return getFreeWebView();
+				}
+			} else {
+				// 2.2. 页面外加载，新开webview
+				return getFreeWebView();
+			}
+		}
+	}
+
+	/**
+	 * 获取一个新的BdWebview
+	 * 
+	 * @return BdWebview实例
+	 */
+	private BdWebPoolCustomView getFreeWebView() {
+	    //<modified by qumiao 2012.9.25 BEGIN
+	    //使用单WebView
+//		int curWebViewPos = getWebViewIndex(mCurWebView);
+//		curWebViewPos = (curWebViewPos + 1) % mMaxPoolSize;
+//		BdWebPoolCustomView webview = getWebViewByPos(curWebViewPos);
+//		// 1. 如果下一个BdWebView存在，则直接复用
+//		if (webview != null) {
+//			// 1.1 设置当前的历史记录大小
+//			int historyCount = webview.copyBackForwardList().getSize();
+//			webview.setHistoryCount(historyCount);
+//			// 1.2 清除UI内容
+//			webview.clearView();
+//			// 1.3 复用webview，用白布遮住
+//			showMaskView();
+//		} else {
+//			// 2. 否则，新建BdWebView
+	    BdWebPoolCustomView webview = mCurWebView;
+	    if (webview == null) {
+	    //modified by qumiao 2012.9.25 END>
+			Context context = getContext();
+			if (!(context instanceof Activity)) {
+				BdLog.w("context is not activity, can not create webview.");
+				return webview;
+			}
+			Activity act = (Activity) context;
+			webview = new BdWebPoolCustomView(this, act.getParent() == null ? act : act.getParent());
+			webview.setWebViewClient(new BdWebPoolCustomViewClient());
+			webview.setWebChromeClient(new BdWebPoolCustomChromeClient());
+			webview.setWebJsClient(new BdWebPoolCustomJsClient());
+			webview.setOnLongClickListener(this);
+			// delete-begin by caohaitao 20120804, 这行代码导致2.3 mtk 平台(易平台长虹手机)，zoomcontrol 显示，但是点击无效。
+			//disableZoomButtonsController(webview);
+			// delete-end by caohaitao 20120804
+			// 2.1. 初始化BdWebSettings
+			BdWebSettings settings = webview.getSettings();
+			
+			//20120921 add by cyf 在UA中增加信息
+			String originalUa = settings.getUserAgentString();
+            String ua = BaiduIdentityManager.getInstance(getContext())
+                    .processUserAgent(originalUa);
+            if (!TextUtils.equals(originalUa, ua)) {
+                settings.setUserAgentString(ua);
+                if (DEBUG || SearchBox.DEBUG) {
+                    Log.i("BdWebPoolView", "set ua:" + ua);
+                }
+            }
+			
+			// 2.2. 添加BdWebSettings观察者
+			if (mSettings != null) {
+				mSettings.attach(settings);
+			}
+			// 2.3. 初始化JavascriptInterface
+			initJavascriptClients(webview);
+			// 2.4. 设置下载监听器
+			if (mDownloadListener != null) {
+				webview.setDownloadListener(mDownloadListener);
+			}
+			
+			webview.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
+			
+			mWebViewList.add(webview);
+			
+			//<added by qumiao 2012.9.25 BEGIN
+			//fix bug: SEARHBOX-1520 【android框四期】【搜索】部分搜索链接有问题，显示空白页
+			//将原来switchWebView中的逻辑移到此处，保证单WebView正常使用
+			addWebView(webview);
+			webview.onResume();
+            View view = webview.getWebView();
+            if (view != null) {
+                view.requestFocus();
+            }
+            mCurWebView = webview;
+			//added by qumiao 2012.9.25 END>
+		}
+		return webview;
+	}
+
+	/**
+	 * 根据索引获取指定的BdWebView
+	 * 
+	 * @param aPos
+	 *            BdWebView的索引
+	 * @return BdWebView实例
+	 */
+	private BdWebPoolCustomView getWebViewByPos(int aPos) {
+		if (aPos < 0 || aPos >= mWebViewList.size()) {
+			return null;
+		}
+		return mWebViewList.get(aPos);
+	}
+
+	//<removed by qumiao 2012.9.18 BEGIN
+    //使用单WebView，让其自己控制前进后退历史列表
+//	/**
+//	 * 获取指定位置的item是否在WebView历史记录里
+//	 * 
+//	 * @param aIndex
+//	 *            前进后退列表指定位置
+//	 * @return BdWebPoolBackForwardListItem实例
+//	 */
+//	private BdWebPoolBackForwardListItem getItem(int aIndex) {
+//		if (aIndex < 0 || aIndex >= mBackForwardList.getSize()) {
+//			BdLog.w(aIndex + " Out Of Bounds.");
+//			return null;
+//		}
+//		BdWebPoolBackForwardListItem item = mBackForwardList.getItem(aIndex);
+//		if (item.getUrl() != null) {
+//			BdWebView webView = item.getWebView();
+//			if (webView != null) {
+//				int itemIndex = item.getIndex();
+//				BdLog.d("itemIdex: " + itemIndex);
+//				BdWebHistoryItem nativeItem = webView.copyBackForwardList().getItemAtIndex(itemIndex);
+//				if (nativeItem != null) {
+//					String nativeUrl = nativeItem.getUrl();
+//					String backUrl = item.getUrl();
+//					BdLog.v(nativeUrl + ", " + backUrl);
+//					if (nativeUrl != null && nativeUrl.equals(backUrl)) {
+//						BdLog.i("get item. pos: " + aIndex + ", native native: " + itemIndex);
+//						return item;
+//					}
+//				}
+//			}
+//		}
+//		// 如果找不到，则往后遍历当前WebView，校正为正确的WebView位置
+//		if (verifyItemIndex(aIndex)) {
+//			BdLog.i("verify item index ok, return item.");
+//			return item;
+//		} else {
+//			// 删除掉并返回空
+//			BdLog.w(aIndex + " is not found, delete it.");
+//			removeItem(aIndex);
+//			return null;
+//		}
+//	}
+//
+//	/**
+//	 * 校验前进后退项是否真的在WebView的某个位置，如果不在，往后遍历找到真正的位置
+//	 * 
+//	 * @param aIndex
+//	 *            前进后退项索引
+//	 * @return true表示找到了真正的位置，false表示没找到真正的位置
+//	 */
+//	private boolean verifyItemIndex(int aIndex) {
+//		BdWebPoolBackForwardListItem aItem = mBackForwardList.getItem(aIndex);
+//		if (aItem != null) {
+//			BdWebView webView = aItem.getWebView();
+//			if (webView != null) {
+//				int baseIndex = aItem.getIndex() - 1;
+//				// 往前查找WebView的历史记录
+//				for (int i = baseIndex; i >= 0; i--) {
+//					BdWebBackForwardList bfList = webView.copyBackForwardList();
+//					BdWebHistoryItem nativeItem = bfList.getItemAtIndex(i);
+//					if (nativeItem != null) {
+//						String nativeUrl = nativeItem.getUrl();
+//						String url = aItem.getUrl();
+//						BdLog.v(nativeUrl + ", " + url);
+//						// 找到相同的url在索引i处
+//						if (nativeUrl != null && nativeUrl.equals(url)) {
+//							// 检查索引i是否已经在aItem之前的item里，如果在，则删除掉
+//							int backIndex = aIndex - 1;
+//							if (isNativeIndexInBfList(webView, i, backIndex)) {
+//								removeItem(backIndex);
+//								int curIndex = getCurIndex();
+//								if (backIndex <= curIndex) {
+//									mBackForwardList.goBack();
+//								}
+//							}
+//							BdLog.i("get correct native index. pos: " + aIndex + ", native native: " + i);
+//							aItem.setIndex(i);
+//							return true;
+//						}
+//					}
+//				}
+//			}
+//		}
+//		return false;
+//	}
+//
+//	/**
+//	 * @param aWebView
+//	 *            BdWebView实例
+//	 * @param aNativeIndex
+//	 *            BdWebView的指定索引
+//	 * @param aBaseItemIndex
+//	 *            前进后退列表的指定索引
+//	 * @return 如果BdWebView中索引aNativeIndex在[0,
+//	 *         aBaseItemIndex]的前进后退列表中，则返回true，反之亦然
+//	 */
+//	private boolean isNativeIndexInBfList(BdWebView aWebView, int aNativeIndex, int aBaseItemIndex) {
+//		for (int i = aBaseItemIndex; i >= 0; i--) {
+//			BdWebPoolBackForwardListItem item = mBackForwardList.getItem(i);
+//			int nativeIndex = item.getIndex();
+//			BdWebView webView = item.getWebView();
+//			// 如果同一个WebView里索引aNativeIndex在item里，则找到
+//			if (webView.equals(aWebView) && nativeIndex == aNativeIndex) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
+//
+//	/**
+//	 * 获取指定位置的前一个item
+//	 * 
+//	 * @param aPos
+//	 *            前进后退列表指定位置
+//	 * @return BdWebPoolBackForwardListItem实例
+//	 */
+//	private BdWebPoolBackForwardListItem getPreItem(int aPos) {
+//		int backPos = aPos - 1;
+//		if (backPos < 0) {
+//			BdLog.w("can not find any back item, return.");
+//			return null;
+//		}
+//		try {
+//			// 1. 查找指定WebView的指定位置，如果找到，直接返回
+//			BdWebPoolBackForwardListItem backItem = getItem(backPos);
+//			if (backItem != null) {
+//				return backItem;
+//			} else {
+//				// 2. 如果找不到，继续往后查找
+//				return getPreItem(backPos);
+//			}
+//		} catch (Exception e) {
+//			BdLog.e("get back item error.", e);
+//			return null;
+//		}
+//	}
+//
+//	/**
+//	 * 获取指定位置的后一个item
+//	 * 
+//	 * @param aPos
+//	 *            前进后退列表指定位置
+//	 * @return BdWebPoolBackForwardListItem实例
+//	 */
+//	private BdWebPoolBackForwardListItem getNextItem(int aPos) {
+//		int forwardPos = aPos + 1;
+//		if (forwardPos >= mBackForwardList.getSize()) {
+//			BdLog.w("can not find any forward item, return.");
+//			return null;
+//		}
+//		try {
+//			// 1. 查找指定WebView的指定位置，如果找到，直接返回
+//			BdWebPoolBackForwardListItem forwardItem = getItem(forwardPos);
+//			if (forwardItem != null) {
+//				return forwardItem;
+//			} else {
+//				// 2. 如果找不到，继续往后查找
+//				return getNextItem(forwardPos);
+//			}
+//		} catch (Exception e) {
+//			BdLog.e("get back item error.", e);
+//			return null;
+//		}
+//	}
+	//removed by qumiao 2012.9.18 END>
+	
+	/**
+	 * 获取可用的BdWebview前，判断当前BdWebView是否在加载重定向Url
+	 * 
+	 * @return true表示是重定向，false表示不是重定向
+	 */
+	private boolean isRedirectLoad() {
+		return isRedirectLoad(mCurWebView);
+	}
+
+	/**
+	 * 获取可用的BdWebview前，判断指定BdWebView是否在加载重定向Url
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 * @return true表示是重定向，false表示不是重定向
+	 */
+	private boolean isRedirectLoad(BdWebView aWebView) {
+		boolean isRedirectLoad = false;
+		int index = getWebViewIndex(aWebView);
+		BdWebPoolCustomView webview = getWebViewByPos(index);
+		if (webview != null) {
+			int count_1 = aWebView.copyBackForwardList().getSize();
+			int count_2 = webview.getHistoryCount();
+			if (count_1 <= count_2) {
+				isRedirectLoad = true;
+			}
+		}
+		// 有可能误判为重定向，如果获取到用户点击的链接，则认为不是重定向
+		if (isRedirectLoad) {
+			String clinkLink = getClickLink(aWebView);
+			BdLog.d("clinkLink: " + clinkLink);
+			if (clinkLink != null && clinkLink != "undefined" && !clinkLink.startsWith("#")
+					&& !clinkLink.startsWith("javascript")) {
+				isRedirectLoad = false;
+				BdLog.i("because get clink link, we think this load is not redirect.");
+			}
+		}
+		return isRedirectLoad;
+	}
+
+	//<removed by qumiao 2012.9.18 BEGIN
+    //使用单WebView，让其自己控制前进后退历史列表
+//	/**
+//	 * 获取新的历史记录索引
+//	 * 
+//	 * @param aWebView
+//	 *            BdWebView 实例
+//	 * @return 新的历史记录位置
+//	 */
+//	private int getNewItemIndex(BdWebView aWebView, String aUrl) {
+//		int newItemIndex = -1;
+//		int lastCurrentIndex = getLastCurrentIndex(aWebView);
+//		int currentIndex = aWebView.copyBackForwardList().getCurrentIndex();
+//		BdLog.d("webview: " + getWebViewIndex(aWebView) + ", cur index: " + currentIndex + ", last index: "
+//				+ lastCurrentIndex + ", cur url: " + aWebView.getUrl());
+//		if (currentIndex - lastCurrentIndex == 1) {
+//			newItemIndex = currentIndex;
+//		} else {
+//			// bugfix#FLYFLOW-3869 如果加载的资源url等于当前WebView的url，则也新增item 
+//			if (aUrl != null && aUrl.equals(aWebView.getUrl())) {
+//				BdLog.i("get resource url as new item.");
+//				newItemIndex = currentIndex;
+//			}
+//		}
+//		setLastCurrentIndex(aWebView, currentIndex);
+//		return newItemIndex;
+//	}
+//
+//	/**
+//	 * 前进后退项是否存在于WebView的历史记录中
+//	 * 
+//	 * @param aItem
+//	 *            BdWebPoolBackForwardListItem实例
+//	 * @return true表示前进后退项不存在于WebView的历史记录中，要被删除掉
+//	 */
+//	private boolean isDestroyItem(BdWebPoolBackForwardListItem aItem) {
+//		return false;
+//	}
+//
+//	/**
+//	 * 切换到指定的历史记录项
+//	 * 
+//	 * @param fromIndex
+//	 *            原索引
+//	 * @param toIndex
+//	 *            目标索引
+//	 */
+//	private void goToItem(int fromIndex, int toIndex) {
+//		BdLog.d("toIndex: " + toIndex);
+//		BdWebPoolBackForwardListItem toItem = mBackForwardList.getItem(toIndex);
+//		BdWebPoolCustomView webView = (BdWebPoolCustomView) toItem.getWebView();
+//		int webViewIndex = getWebViewIndex(webView);
+//		if (webView != null) {
+//			int nativeIndex = toItem.getIndex();
+//			if (nativeIndex >= 0 && toIndex >= 0) {
+//				int nativeCurIndex = webView.copyBackForwardList().getCurrentIndex();
+//				int nativeSteps = nativeIndex - nativeCurIndex;
+//				if (nativeSteps != 0) {
+//					// 1. 由于同一个WebView前进后退加载也会调用onPageStart，需要标记当前WebView已进入前进后退模式，前进后退模式下不会清除后面的历史记录
+//					webView.setLoadMode(LoadMode.LOAD_BACKORFORWARD);
+//				}
+//				// 2. 如果是另外的WebView的goBackOrForward，则用白板遮住
+//				boolean showMaskView = false;
+//				if (!webView.equals(mCurWebView)) {
+//					// 3.1 如果要展示的WebView要goBackOrForward，则清掉WebView并用白屏遮住，以免会闪现当前页面
+//					if (nativeSteps != 0) {
+//						//						webView.clearView();
+//						showMaskView();
+//						showMaskView = true;
+//					}
+//				}
+//				// 3. goBackOrForward
+//				int steps = toIndex - fromIndex;
+//				mBackForwardList.goBackOrForward(steps);
+//				webView.goBackOrForward(nativeSteps);
+//				if (!showMaskView) {
+//					hideMaskView();
+//				}
+//				switchWebView(mCurWebView, webView);
+//				// 4.0以上版本前进后退强制翻页，解决白屏问题 bugfix#SEARHBOX-859
+//				if (Build.VERSION.SDK_INT >= 14) {
+//					webView.pageDown(false);
+//					webView.pageUp(false);
+//				}
+//
+//				// 4. 设置title
+//				BdWebHistoryItem item = webView.copyBackForwardList().getItemAtIndex(nativeIndex);
+//				if (item != null) {
+//					String title = item.getTitle();
+//					BdLog.d(title);
+//					toItem.setTitle(title);
+//				}
+//
+//				if (toItem.getLoadStatus() == LoadStatus.STATUS_ERROR) {
+//					showErrorPage();
+//				} else {
+//					hideErrorPage();
+//				}
+//
+//				BdLog.d("switch webview " + webViewIndex + " from " + nativeCurIndex + " to " + nativeIndex);
+//				BdLog.d("switch backforward list from " + fromIndex + " to " + toIndex);
+//			} else {
+//				BdLog.w(webViewIndex + "'s to item not exsit, can not go back.");
+//			}
+//		} else {
+//			BdLog.w(fromIndex + "'s to webview not exsit, can not go back.");
+//		}
+//	}
+	//removed by qumiao 2012.9.18 END>
+	
+//	/**
+//	 * 多WebView切换
+//	 * 
+//	 * @param aOldWebView
+//	 *            要移除掉的WebView
+//	 * @param aNewWebView
+//	 *            要展示的WebView
+//	 */
+//	private void switchWebView(BdWebPoolCustomView aOldWebView, BdWebPoolCustomView aNewWebView) {
+//	    //<added by qumiao 2012.9.18 BEGIN
+//        //使用单WebView，不切换
+//	    if (aOldWebView != null) {
+//	        return;
+//	    }
+//	    //added by qumiao 2012.9.18 END>
+//	    
+//		BdLog.i(aOldWebView + ", " + aNewWebView);
+//		if (aNewWebView != null) {
+//			if (aOldWebView != null) {
+//				View oldView = aOldWebView.getWebView();
+//				if (aNewWebView.equals(aOldWebView)) {
+//					BdLog.i("the same webview, not need to switch.");
+//					return;
+//				}
+//				aOldWebView.stopLoading();
+//				aOldWebView.onPause();
+//				if (oldView != null) {
+//					oldView.clearFocus();
+//					removeView(oldView);
+//				}
+//			}
+//			addWebView(aNewWebView);
+//			aNewWebView.onResume();
+//			View newView = aNewWebView.getWebView();
+//			if (newView != null) {
+//				newView.requestFocus();
+//			}
+//			mCurWebView = aNewWebView;
+//
+//			if (mWebPoolViewClient != null) {
+//				mWebPoolViewClient.onWebViewChanged(this);
+//			}
+//		} else {
+//			BdLog.w("no new webview to switch, use old one.");
+//		}
+//	}
+
+	/**
+	 * 获取指定BdWebView的索引
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 * @return 指定BdWebView的索引
+	 */
+	private int getWebViewIndex(BdWebView aWebView) {
+		for (int i = 0; i < mWebViewList.size(); i++) {
+			BdWebView webView = mWebViewList.get(i);
+			if (webView.equals(aWebView)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	//<removed by qumiao 2012.9.18 BEGIN
+    //使用单WebView，让其自己控制前进后退历史列表
+//	/**
+//	 * 清除指定前进后退列表索引后面的所有项
+//	 * 
+//	 * @param aPos
+//	 *            前进后退列表索引
+//	 */
+//	private void removeItemsAfterPos(int aPos) {
+//		removeItemsAfterPos(aPos, false);
+//	}
+//
+//	/**
+//	 * 清除指定前进后退列表索引后面的所有项
+//	 * 
+//	 * @param aPos
+//	 *            前进后退列表索引
+//	 * @param aCheckDestory
+//	 *            是否要校验前进后退项
+//	 */
+//	private void removeItemsAfterPos(int aPos, boolean aCheckDestory) {
+//		int size = mBackForwardList.getSize();
+//		BdLog.d("aPos: " + aPos + ", size: " + size);
+//		int i = size - 1;
+//		try {
+//			do {
+//				if (i <= aPos || i < 0) {
+//					break;
+//				}
+//				if (aCheckDestory) {
+//					if (isDestroyItem(mBackForwardList.getItem(i))) {
+//						BdLog.d("remove item: " + i);
+//						removeItem(i);
+//					}
+//				} else {
+//					BdLog.d("remove item: " + i);
+//					removeItem(i);
+//				}
+//				i--;
+//			} while (true);
+//		} catch (Exception e) {
+//			BdLog.e("pos" + i + " remove fail.", e);
+//		}
+//	}
+//
+//	/**
+//	 * 删除一个元素
+//	 * 
+//	 * @param aIndex
+//	 *            待删除的元素索引
+//	 */
+//	protected void removeItem(int aIndex) {
+//		mBackForwardList.removeItem(aIndex);
+//	}
+	//removed by qumiao 2012.9.18 END>
+	
+	/**
+	 * 添加BdWebView实例到UI上
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 */
+	private void addWebView(BdWebView aWebView) {
+		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
+				FrameLayout.LayoutParams.MATCH_PARENT);
+		if (aWebView != null) {
+			View aView = aWebView.getWebView();
+			if (aView != null && aView.getParent() == null) {
+				addView(aView, 0, params);
+			}
+		}
+	}
+
+	/**
+	 * 显示遮罩层
+	 * 
+	 */
+	protected void showMaskView() {
+		BdLog.d("");
+		mMaskView.setVisibility(VISIBLE);
+	}
+
+	/**
+	 * 隐藏遮罩层
+	 */
+	protected void hideMaskView() {
+		BdLog.d("");
+		if (mMaskView.getVisibility() == VISIBLE) {
+			mMaskView.setVisibility(GONE);
+		}
+	}
+
+	//<removed by qumiao 2012.9.18 BEGIN
+    //使用单WebView，让其自己控制前进后退历史列表
+//	/**
+//	 * 增加一个前进后退项
+//	 * 
+//	 * @param aView
+//	 *            当前WebView
+//	 * @param aUrl
+//	 *            Url地址
+//	 * @param aNewNativeIndex
+//	 *            新增项在WebView中的索引，该位置不一定正确，前进后退的时候需要做校验，更新为正确的索引
+//	 * @param aRemoveAfterCur
+//	 *            是否删除当前项后面的所有项
+//	 */
+//	private void addBackForwardItem(BdWebView aView, String aUrl, int aNewNativeIndex, boolean aRemoveAfterCur) {
+//		// 1. 数据校验
+//		if (aUrl == null) {
+//			BdLog.w("Url is null, do not add item.");
+//			return;
+//		}
+//		if (aView == null) {
+//			BdLog.w("webview is null, do not add item.");
+//			return;
+//		}
+//		BdLog.d(getWebViewDebugInfo(aView));
+//		int webview_index = getWebViewIndex(aView);
+//		BdWebPoolCustomView webview = getWebViewByPos(webview_index);
+//		if (webview != null) {
+//			LoadMode loadMode = webview.getLoadMode();
+//			BdLog.d("loadMode: " + loadMode);
+//			// 1.1. 如果当前为前进后退或者刷新模式，则不删除当前item后面的历史记录，也不会添加历史记录项
+//			if (loadMode == LoadMode.LOAD_BACKORFORWARD || loadMode == LoadMode.LOAD_RELOAD) {
+//				BdLog.i("go back or forward or refresh, not add BackForwardItem");
+//				return;
+//			}
+//			// 1.2. 如果当前WebView在多View的后台，则不删除当前item后面的历史记录，也不会添加历史记录项。防止单View后退会把后面的item都清掉
+//			if (!aView.equals(mCurWebView)) {
+//				BdLog.i("webview is in background, not add BackForwardItem");
+//				return;
+//			}
+//		}
+//
+//		int curIndex = mBackForwardList.getCurIndex();
+//		BdLog.d("curIndex: " + curIndex + ", aNewNativeIndex: " + aNewNativeIndex);
+//
+//		// 2. 是否有新的item
+//		if (aNewNativeIndex < 0) {
+//			BdLog.w("NewNativeIndex is invalid. " + aNewNativeIndex);
+//			return;
+//		}
+//
+//		BdWebPoolBackForwardListItem curItem = null;
+//		String curUrl = null;
+//		BdWebView curWebView = null;
+//		int curNativeIndex = -1;
+//		boolean isCurWebView = false;
+//		boolean isCurUrl = false;
+//
+//		try {
+//			curItem = mBackForwardList.getItem(curIndex);
+//		} catch (Exception e) {
+//			BdLog.w(e.getMessage());
+//		}
+//		if (curItem != null) {
+//			curUrl = curItem.getUrl();
+//			BdLog.d("curUrl: " + curUrl);
+//			curWebView = curItem.getWebView();
+//			curNativeIndex = curItem.getIndex();
+//			BdLog.d("curNativeIndex: " + curNativeIndex);
+//		}
+//
+//		if (aView.equals(curWebView)) {
+//			isCurWebView = true;
+//		}
+//		if (aUrl.equals(curUrl)) {
+//			isCurUrl = true;
+//		}
+//
+//		// 5. 构造新item实例
+//		BdWebPoolBackForwardListItem item = new BdWebPoolBackForwardListItem();
+//		item.setIndex(aNewNativeIndex);
+//		// bugfix#SEARHBOX-791
+//		item.setWebView(webview);
+//		item.setUrl(aUrl);
+//
+//		Object errorTag = getTag(R.id.webcontent_error_code);
+//		int errorTagCode = errorTag == null ? 0 : (Integer) errorTag;
+//		if (errorTagCode != 0) {
+//			item.setLoadStatus(LoadStatus.STATUS_ERROR);
+//		}
+//
+//		BdLog.d("curWebViewIndex: " + getWebViewIndex(curWebView) + ", " + "newWebViewIndex: "
+//				+ getWebViewIndex(aView));
+//
+//		// 3. 如果新增的item与当前item相同并且与当前webview是不同的webview，则只更新item，以免加入重复的item
+//		if (!isCurWebView && isCurUrl) {
+//			BdLog.i("current url is exsit, only update item.");
+//			mBackForwardList.setItem(curIndex, item);
+//			return;
+//		}
+//
+//		boolean addNewItem = true;
+//		// 6. 如果新来的item与当前item是同一个WebView，并且当前item在WebView的位置等于aNewNativeIndex
+//		// 可能是当前item是重定向或重复添加的，判断当前item是否真的在WebView的位置上，如果不在则使用新item替換当前的item
+//		if (isCurWebView) {
+//			if (curNativeIndex == aNewNativeIndex) {
+//				addNewItem = false;
+//				// 由于新增item的时候已经去掉后面的item，因此这里替换item的时候无需删除掉后面的item
+//				aRemoveAfterCur = false;
+//				if (!isInNativeIndex(curWebView, curIndex, curNativeIndex)) {
+//					BdLog.i(curIndex + " is replace because a new item is coming.");
+//					mBackForwardList.setItem(curIndex, item);
+//				}
+//			} else if (curNativeIndex > aNewNativeIndex) {
+//				BdLog.i("curNativeIndex great than newNativeIndex, do not add new item or update current item.");
+//				addNewItem = false;
+//			}
+//		}
+//
+//		// 7. 删除当前item后的所有项
+//		if (aRemoveAfterCur) {
+//			removeItemsAfterPos(curIndex);
+//		}
+//
+//		// 8. 新增item
+//		if (addNewItem) {
+//			BdLog.i("add new item. " + aUrl);
+//			mBackForwardList.addItem(item);
+//			mBackForwardList.goForward();
+//		}
+//
+//		// 9. 检查当前item和前一个item是否在同一个位置，如果是，则删除当前item
+//		curIndex = mBackForwardList.getCurIndex();
+//		int index = curIndex - 1;
+//		if (isInNativeIndex(aView, index, aNewNativeIndex)) {
+//			BdLog.i(curIndex + "'s native index is exsit, remove it.");
+//			mBackForwardList.removeItem(curIndex);
+//			mBackForwardList.goBack();
+//		}
+//	}
+	//removed by qumiao 2012.9.18 END>
+	
+	/**
+	 * 设置WebView上一次的当前位置
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 * @param aCurrentIndex
+	 *            WebView上一次的当前位置
+	 */
+	private void setLastCurrentIndex(BdWebView aWebView, int aCurrentIndex) {
+		int currentIndex = aWebView.copyBackForwardList().getCurrentIndex();
+		int webview_index = getWebViewIndex(aWebView);
+		BdWebPoolCustomView webview = getWebViewByPos(webview_index);
+		if (webview != null) {
+			webview.setLastIndex(currentIndex);
+		}
+	}
+
+	/**
+	 * 获取WebView上一次的当前位置
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 * @return WebView上一次的当前位置
+	 */
+	private int getLastCurrentIndex(BdWebView aWebView) {
+		int webview_index = getWebViewIndex(aWebView);
+		BdWebPoolCustomView webview = getWebViewByPos(webview_index);
+		if (webview != null) {
+			return webview.getLastIndex();
+		} else {
+			return -1;
+		}
+	}
+
+	/**
+	 * 获取BdWebView点击的链接
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 * @return 点击的链接
+	 */
+	private String getClickLink(BdWebView aWebView) {
+		int webview_index = getWebViewIndex(aWebView);
+		BdWebPoolCustomView webview = getWebViewByPos(webview_index);
+		if (webview != null) {
+			return webview.getLoadUrl();
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * 设置BdWebView点击的链接
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 * @param aClickLink
+	 *            点击的链接
+	 */
+	private void setClickLink(BdWebView aWebView, String aClickLink) {
+		int webview_index = getWebViewIndex(aWebView);
+		BdWebPoolCustomView webview = getWebViewByPos(webview_index);
+		if (webview != null) {
+			webview.setLoadUrl(aClickLink);
+		}
+	}
+
+	/**
+	 * 如果链接地址以#号开头或者javascript开头，则不是有效的新链接，用单View打开，否则用多View打开
+	 * 
+	 * @param aClickLink
+	 *            获取到的点击链接
+	 * @return true表示有效的点击链接，用多View打开，反之亦然
+	 */
+	private boolean isValidClickLink(String aClickLink) {
+	    //<modified by qumiao 2012.9.18 BEGIN
+        //使用单WebView
+//		BdLog.d(aClickLink);
+//		if (aClickLink == null || aClickLink == "undefined") {
+//			return true;
+//		}
+//		if (aClickLink.startsWith("#") || aClickLink.startsWith("javascript")) {
+//			return false;
+//		}
+//		return true;
+	    return false;
+	    //modified by qumiao 2012.9.18 END>
+	}
+
+	/**
+	 * 加载指定的url
+	 * 
+	 * @param aUrl
+	 *            要加载的url
+	 * @param aExtra
+	 *            Extra数据
+	 */
+	protected void loadUrl(String aUrl, Bundle aExtra) {
+		byte clickMode = aExtra.getByte(BUNDLE_CLINK_MODE, CLICK_FROM_OUTSIDE_PAGE);
+		byte pageType = aExtra.getByte(BUNDLE_PAGE_TYPE, PAGE_TYPE_NORMAL);
+		BdLog.i(clickMode + ", " + pageType);
+		// 1. 如果当前不是正在加载wap1.0页面，则检查是否是wap1.0页面
+		if (pageType != PAGE_TYPE_WAP10) {
+//			BdWapView wapView = BdWapView.getInstance();
+//			if (wapView.checkWapUrl(aUrl)) {
+//				BdLog.d(aUrl + " is maybe a wap url, start to get its content type.");
+//				// 需要先用蒙版盖住
+//				showMaskView();
+//				wapView.loadUrl(this, aUrl, aExtra);
+//			}
+		} else {
+			// 加载wap1.0页面，点击模式设为页面内加载
+			// aExtra.putByte(BUNDLE_CLINK_MODE, CLICK_FROM_PAGE);
+			clickMode = CLICK_FROM_PAGE;
+		}
+//		// 2. 从Pool里获取BdWebView
+//		BdWebPoolCustomView newWebView = getAvailableWebView(clickMode);
+//		// 3. 切WebView
+//		switchWebView(mCurWebView, newWebView);
+		// 4. 加载url
+		if (mCurWebView != null) {
+			mCurWebView.setLoadMode(LoadMode.LOAD_NORMAL);
+			mCurWebView.loadUrl(aUrl);
+		}
+
+		hideErrorPage();
+	}
+	
+	/**
+     * 加载js代码
+     * 
+     * @param js js code
+     */
+	public void loadJavaScript(String js) {
+	    if (mCurWebView != null) {
+            mCurWebView.setLoadMode(LoadMode.LOAD_NORMAL);
+            initJavascriptClients(mCurWebView);
+            mCurWebView.loadUrl(js);
+        }
+	}
+
+	/**
+	 * 多View机制，由于初始化时只创建一个BdWebView，后面创建BdWebView，JavascriptClient要做一次初始化设置
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 */
+	private void initJavascriptClients(BdWebView aWebView) {
+		if (mJsItems != null) {
+			Iterator<String> iter = mJsItems.keySet().iterator();
+			while (iter.hasNext()) {
+				String interfaceName = iter.next();
+				Object obj = mJsItems.get(interfaceName);
+				aWebView.addJavascriptInterface(obj, interfaceName);
+			}
+		}
+	}
+
+	/**
+	 * 打印出BdWebView信息，调试用
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 * @return BdWebView调试信息
+	 */
+	private String getWebViewDebugInfo(BdWebView aWebView) {
+		StringBuffer sb = new StringBuffer();
+		int size = aWebView.copyBackForwardList().getSize();
+		sb.append(aWebView + ", " + size);
+		if (aWebView instanceof BdWebPoolCustomView) {
+			BdWebPoolCustomView customView = (BdWebPoolCustomView) aWebView;
+			sb.append(", " + customView.getLoadMode());
+		}
+		sb.append("\n");
+		for (int i = 0; i < size; i++) {
+			sb.append(i + ": ");
+			BdWebHistoryItem item = aWebView.copyBackForwardList().getItemAtIndex(i);
+			if (item != null) {
+				sb.append(item.getUrl());
+				sb.append("\n");
+			}
+		}
+		sb.append("***************************");
+		sb.append("\n");
+		return sb.toString();
+	}
+
+	//<removed by qumiao 2012.9.18 BEGIN
+    //使用单WebView，让其自己控制前进后退历史列表
+//	/**
+//	 * 检查后一个item是否存在于WebView中
+//	 */
+//	private void checkNextItem() {
+//		int curIndex = getCurIndex();
+//		int nextIndex = curIndex + 1;
+//		checkItem(nextIndex);
+//	}
+//
+//	/**
+//	 * 检查当前item是否存在于WebView中
+//	 */
+//	private void checkCurItem() {
+//		int curIndex = getCurIndex();
+//		checkItem(curIndex);
+//	}
+//
+//	/**
+//	 * 检查指定item是否存在于WebView中
+//	 * 
+//	 * @param aIndex
+//	 *            前进后退列表索引位置
+//	 */
+//	private void checkItem(int aIndex) {
+//		BdLog.d("checkIndex: " + aIndex);
+//		BdWebPoolBackForwardListItem nextItem = getItem(aIndex);
+//		if (nextItem == null) {
+//			BdLog.w(aIndex + " is not found.");
+//		}
+//	}
+//
+//	/**
+//	 * @param aWebView
+//	 *            BdWebView实例
+//	 * @param aIndex
+//	 *            前进后退列表索引
+//	 * @param aNativeIndex
+//	 *            aWebView的指定索引
+//	 * @return 如果前进后退列表aIndex的item在aWebView的aNativeIndex索引上，则返回true，否则返回false
+//	 */
+//	private boolean isInNativeIndex(BdWebView aWebView, int aIndex, int aNativeIndex) {
+//		if (aIndex >= 0 && aIndex < mBackForwardList.getSize()) {
+//			BdWebPoolBackForwardListItem item = mBackForwardList.getItem(aIndex);
+//			if (item != null) {
+//				String itemUrl = item.getUrl();
+//				BdWebView itemWebView = item.getWebView();
+//				BdWebHistoryItem nativeItem = itemWebView.copyBackForwardList().getItemAtIndex(aNativeIndex);
+//				if (nativeItem != null) {
+//					String nativeUrl = nativeItem.getUrl();
+//					if (aWebView.equals(itemWebView) && itemUrl.equals(nativeUrl)) {
+//						return true;
+//					}
+//				}
+//			}
+//		}
+//		return false;
+//	}
+//
+//	/**
+//	 * 判断指定的url是否在前进后退列表的指定位置上
+//	 * 
+//	 * @param aIndex
+//	 *            前进后退列表的指定位置
+//	 * @param aUrl
+//	 *            指定的url
+//	 * @return 如果指定的url是否在前进后退列表的指定位置上，则返回true，反之亦然
+//	 */
+//	public boolean isUrlInItemIndex(int aIndex, String aUrl) {
+//		if (aIndex >= 0 && aIndex < mBackForwardList.getSize()) {
+//			BdWebPoolBackForwardListItem item = mBackForwardList.getItem(aIndex);
+//			if (item != null) {
+//				String itemUrl = item.getUrl();
+//				if (aUrl.equals(itemUrl)) {
+//					return true;
+//				}
+//			}
+//		}
+//		return false;
+//	}
+	//removed by qumiao 2012.9.18 END>
+
+	/**
+	 * 判断字符串是否为网址
+	 * 
+	 * @param input
+	 *            输入的字符串
+	 * @return 如果为网站则返回trur，反之亦然
+	 */
+	private boolean checkStrIsUrl(String input) {
+		Pattern pattern = Pattern.compile("^((https|http|ftp|rtsp|mms)?://)"
+				+ "?(([0-9a-z_!~*'().&=+$%-]+: )?[0-9a-z_!~*'().&=+$%-]+@)?"
+				+ "(([0-9]{1,3}\\.){3}[0-9]{1,3}" + "|" + "([0-9a-z_!~*'()-]+\\.)*"
+				+ "([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]\\." + "[a-z]{2,6})" + "(:[0-9]{1,4})?" + "((/?)|"
+				+ "(/[0-9a-z_!~*'().;?:@&=+$,%#-]+)+/?)$", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(input);
+		return matcher.find();
+	}
+
+	/**
+	 * 由于多View切换，可能会导致当前WebView被切到后台了，但还在加载
+	 * 
+	 * @param aCallBackWebView
+	 *            BdWebView实例
+	 */
+	private void setCurWebViewNotify(BdWebView aCallBackWebView) {
+		if (aCallBackWebView == null) {
+			mCurWebViewNotify = false;
+		} else {
+			mCurWebViewNotify = aCallBackWebView.equals(mCurWebView);
+		}
+	}
+
+	/**
+	 * 隐藏右下角的缩放控件
+	 * 
+	 * @param aWebView
+	 *            BdWebView实例
+	 */
+	// delete-begin by caohaitao 20120804, 代码导致2.3 mtk 平台(易平台长虹手机)，zoomcontrol 显示，但是点击无效。
+	/*
+	private void disableZoomButtonsController(BdWebView aWebView) {
+		ZoomButtonsController zbController = aWebView.getZoomButtonsController();
+		if (zbController != null) {
+			zbController.setOnZoomListener(null);
+			zbController.setVisible(false);
+			zbController.getZoomControls().setVisibility(GONE);
+			zbController.getZoomControls().setEnabled(false);
+		}
+	}
+	*/
+	// delete-begin by caohaitao 20120804
+	
+	/**
+	 * 根据错误码改变状态
+	 * 
+	 * @param view
+	 *            webview
+	 * @param changeStateMask
+	 *            旧的状态
+	 * @return 新状态
+	 */
+	private int changeStateMaskByErrorCode(View view, int changeStateMask) {
+		Object errorTag = view.getTag(R.id.webcontent_error_code);
+		int errorTagCode = errorTag == null ? 0 : (Integer) errorTag;
+		if (errorTagCode != 0) {
+			changeStateMask |= STATE_RECEIVE_ERROR;
+		}
+		return changeStateMask;
+	}
+
+	/**
+	 * 当浏览器状态发生改变时，触发此方法。
+	 * 
+	 * @param view
+	 *            发生改变的主View
+	 * @param changeStateMask
+	 *            状态改变标志位
+	 * @param newValue
+	 *            新值
+	 * */
+	public void onStateChanged(int changeStateMask, Object newValue) {
+		// 页面开始显示(推断出来的，已经显示出来)
+		BdLog.d(changeStateMask + ", " + getShowState());
+		if ((changeStateMask & BdWebPoolView.STATE_START_SHOW) != 0) {
+			// 页面开始显示时先隐藏错误页
+			if (getShowState() > BdWebPoolView.NOT_SHOW) {
+				hideErrorPage();
+			}
+
+			if ((changeStateMask & BdWebPoolView.STATE_RECEIVE_ERROR) != 0) {
+				Object errorTag = getTag(R.id.webcontent_error_code);
+				int errorTagCode = errorTag == null ? 0 : (Integer) errorTag;
+				setErrorCode(errorTagCode);
+				showErrorPage();
+			} else if (getErrorCode() != 0) {
+				showErrorPage();
+			} else {
+				hideErrorPage();
+			}
+		}
+
+		// 页面加载进度改变。
+		if ((changeStateMask & BdWebPoolView.STATE_PROGRESS_CHANGED) != 0) {
+			int progress = (Integer) newValue;
+			if (progress < BdWebPoolView.PROGRESS_MIN) {
+				progress = BdWebPoolView.PROGRESS_MIN;
+			}
+		}
+	}
+
+	@Override
+	public boolean onLongClick(View v) {
+		return false;
+	}
+
+	/**
+	 * Call this to balanace a previous call to onPause()
+	 */
+	public void onResume() {
+		if (mCurWebView != null) {
+			mCurWebView.onResume();
+			
+			//<add by qumiao 2012.10.30 BEGIN
+			// 4.0以上版本前进后退强制翻页，解决白屏问题 bugfix#SEARHBOX-859
+            if (Build.VERSION.SDK_INT >= 14) {
+                if (mCurWebView.scrollUp()) {
+                    mCurWebView.scrollDown();
+                }
+            }
+            //add by qumiao 2012.10.30 END>
+		}
+	}
+
+	/**
+	 * Call this to pause any extra processing associated with this view and its
+	 * associated DOM/plugins/javascript/etc. For example, if the view is taken
+	 * offscreen, this could be called to reduce unnecessary CPU and/or network
+	 * traffic. When the view is again "active", call onResume().
+	 * 
+	 * Note that this differs from pauseTimers(), which affects all views/DOMs
+	 */
+	public void onPause() {
+		if (mCurWebView != null) {
+			mCurWebView.onPause();
+		}
+	}
+
+	/**
+	 * @param resultMsg
+	 *            Message
+	 * @param bdTransport
+	 *            BdWebViewTransport
+	 * @return 是否执行成功
+	 */
+	public boolean setWebViewToTarget(Message resultMsg, BdWebView.BdWebViewTransport bdTransport) {
+		BdWebPoolCustomView webPoolCustomView = getAvailableWebView(CLICK_FROM_PAGE);
+		if (webPoolCustomView != null) {
+			bdTransport.setWebView(webPoolCustomView);
+			resultMsg.sendToTarget();
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Request the href of an anchor element due to getFocusNodePath returning
+	 * "href." If hrefMsg is null, this method returns immediately and does not
+	 * dispatch hrefMsg to its target.
+	 * 
+	 * @param hrefMsg
+	 *            This message will be dispatched with the result of the request
+	 *            as the data member with "url" as key. The result can be null.
+	 */
+	public void requestFocusNodeHref(Message hrefMsg) {
+		if (mCurWebView != null) {
+			mCurWebView.requestFocusNodeHref(hrefMsg);
+		}
+	}
+
+   // <add begin by caohaitao 20120907, 解决视频播放不能横屏问题。
+    
+    /**
+     * 设置 activity是否全屏.
+     * @param activity Activity
+     * @param enabled 是否全屏。
+     */
+    public void setFullscreen(Activity activity, boolean enabled) {
+        Window win = activity.getWindow();
+//        WindowManager.LayoutParams winParams = win.getAttributes();
+//        final int bits = WindowManager.LayoutParams.FLAG_FULLSCREEN;
+//        if (enabled) {
+//            winParams.flags |=  bits;
+//        } else {
+//            winParams.flags &= ~bits;
+//            if (mCustomView != null) {
+//                mCustomView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+//            }
+//        }
+//        win.setAttributes(winParams);
+        
+        int flag = !enabled ? 0 : WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        win.setFlags(flag, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+    }
+    
+    /**
+     * 隐藏 custom view。
+     */
+    private void hideCustomView() {
+        if (mCustomView == null) {
+            return;
+        }
+        
+        Context context = getContext();
+        Activity activity = null;
+        if (context instanceof Activity) {
+            activity = (Activity) context;
+        }
+        
+        if (activity != null) {
+            setFullscreen(activity, false);
+            FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
+            decor.removeView(mFullscreenContainer);
+            mFullscreenContainer = null;
+            mCustomView = null;
+            mCustomViewCallback.onCustomViewHidden();
+            // Show the content view.
+            activity.setRequestedOrientation(mOriginalOrientation);
+        }
+    }
+    
+    /**
+     * 显示 customview.
+     * 把回调的 custom view 添加到 layout中。显示出来。
+     * 
+     * @param view 要显示的 customview。
+     * @param requestedOrientation  customview 申请的 orientation 
+     * @param callback callback.
+     */
+    private void showCustomView(View view, int requestedOrientation, BdCustomViewCallback callback) {
+        Context context = getContext();
+        Activity activity = null;
+        if (context instanceof Activity) {
+            activity = (Activity) context;
+        }
+        
+        if (activity != null) {
+            // if a view already exists then immediately terminate the new one
+            if (mCustomView != null) {
+                callback.onCustomViewHidden();
+                return;
+            }
+
+            mOriginalOrientation = activity.getRequestedOrientation();
+            FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
+            mFullscreenContainer = new FullscreenHolder(activity);
+            mFullscreenContainer.addView(view, COVER_SCREEN_PARAMS);
+            decor.addView(mFullscreenContainer, COVER_SCREEN_PARAMS);
+            mCustomView = view;
+            setFullscreen(activity, true);
+            mCustomViewCallback = callback;
+            activity.setRequestedOrientation(requestedOrientation);
+        }
+
+    }
+    
+    /**
+     * webview custom view full screen holder. as a container.
+     */
+    static class FullscreenHolder extends FrameLayout {
+
+        /**
+         * constructor.
+         * @param ctx Context
+         */
+        public FullscreenHolder(Context ctx) {
+            super(ctx);
+            setBackgroundColor(ctx.getResources().getColor(android.R.color.black));
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent evt) {
+            return true;
+        }
+
+    }
+    
+    // add end, caohaitao 20120907 end>
+
+
+	/**
+	 * BdWebPoolCustomViewClient
+	 */
+	class BdWebPoolCustomViewClient extends BdWebViewClient {
+
+		/** BdWebView Wrapper */
+		private SoftReference<BdWebView> mWebViewWrapper;
+
+		/**
+		 * obtain WebView Wrapper
+		 * 
+		 * @param aWebView
+		 *            WebView
+		 * @return WebView Wrapper
+		 */
+		public BdWebView obtainWebViewWrapper(WebView aWebView) {
+			BdWebView result = null;
+			if (mWebViewWrapper != null) {
+				result = mWebViewWrapper.get();
+			}
+
+			if (result == null || !result.isContains(aWebView)) {
+				result = new BdWebPoolCustomView(BdWebPoolView.this, aWebView);
+				mWebViewWrapper = new SoftReference<BdWebView>(result);
+			}
+			return result;
+		}
+
+		@Override
+		public boolean shouldOverrideUrlLoading(BdWebView aView, String aUrl) {
+			BdLog.d(aUrl);
+			
+			if (aUrl.startsWith("about:")) {
+			    return false;
+			}
+
+			// 抽离特殊协议处理，放到BaseWebViewBaseWebView.handleSpecialScheme()
+			try {
+			    if (BaseWebView.handleSpecialScheme(getContext(), aUrl)) {
+			        return true;
+			    }
+			    
+			} catch (ActivityNotStartedException e) {
+			    Toast.makeText(getContext(), R.string.activity_not_found, Toast.LENGTH_SHORT).show();
+			    return true;
+			}
+			
+			if (mWebPoolViewClient != null) {
+				if (mWebPoolViewClient.shouldOverrideUrlLoading(BdWebPoolView.this, aUrl)) {
+					return true;
+				}
+			}
+
+
+			// 分析点击的链接
+			String clinkLink = getClickLink(aView);
+			BdLog.d("clinkLink: " + clinkLink);
+			boolean result;
+			if (isValidClickLink(clinkLink)) {
+				// 新链接，用多View打开
+				Bundle extra = new Bundle();
+				extra.putByte(BUNDLE_CLINK_MODE, CLICK_FROM_PAGE);
+				extra.putByte(BdWebPoolView.BUNDLE_PAGE_TYPE, BdWebPoolView.PAGE_TYPE_NORMAL);
+				loadUrl(aUrl, extra);
+				result = true;
+			} else {
+				// 非新链接，用单View打开
+				result = false;
+			}
+			setClickLink(aView, null);
+
+			return result;
+		}
+
+		@Override
+		public void onPageStarted(BdWebView aView, String aUrl, Bitmap aFavicon) {
+			BdLog.d(aUrl);
+			//<removed by qumiao 2012.9.18 BEGIN
+            //使用单WebView，让其自己控制前进后退历史列表
+//			int newNativeIndex = aView.copyBackForwardList().getCurrentIndex() + 1;
+//			addBackForwardItem(aView, aUrl, newNativeIndex, true);
+			//removed by qumiao 2012.9.18 END>
+			
+			// 在onPageStarted时，表示加载一个新页面，所以需要将其置为NOT_SHOW。
+			setShowState(NOT_SHOW);
+
+			if (mWebPoolViewClient != null) {
+				mWebPoolViewClient.onPageStarted(BdWebPoolView.this, aUrl, aFavicon);
+				int changeStateMask = changeStateMaskByErrorCode(BdWebPoolView.this, STATE_PAGE_STARTED);
+				onStateChanged(changeStateMask, null);
+			}
+		}
+
+		@Override
+		public void onPageFinished(BdWebView aView, String aUrl) {
+			BdLog.d(aUrl);
+			//<removed by qumiao 2012.9.18 BEGIN
+            //使用单WebView，让其自己控制前进后退历史列表
+//			// 1. 加载完成后，检查后一个item是否存在于WebView中
+//			checkNextItem();
+			//removed by qumiao 2012.9.18 END>
+
+			// 3. 隐藏前进后退的遮罩图
+			hideMaskView();
+
+			//<removed by qumiao 2012.9.18 BEGIN
+            //使用单WebView，让其自己控制前进后退历史列表
+//			// 4. 由于部分页面加载没有回调onPageStart或者onLoadResource没有新增item，则在页面加载结束时，需要增加前进后退项，以防漏页
+//			int newNativeIndex = aView.copyBackForwardList().getCurrentIndex();
+//			addBackForwardItem(aView, aUrl, newNativeIndex, true);
+//
+//			// 5. 检查当前加载完成页面的是否是要前进或后退的项，如果是，则标记当前WebView已进入正常加载模式
+//			int curIndex = mBackForwardList.getCurIndex();
+//			boolean isUrlInItemIndex = isUrlInItemIndex(curIndex, aUrl);
+//			boolean isInNativeIndex = isInNativeIndex(aView, curIndex, newNativeIndex);
+//			BdLog.i(isUrlInItemIndex + ", " + isInNativeIndex);
+//			if (isUrlInItemIndex && isInNativeIndex) {
+//				int webview_index = getWebViewIndex(aView);
+//				BdWebPoolCustomView webview = getWebViewByPos(webview_index);
+//				if (webview != null) {
+//					webview.setLoadMode(LoadMode.LOAD_NORMAL);
+//				}
+//			}
+//
+//			if (DEBUG) {
+//				BdLog.d(BdWebPoolView.this.toString());
+//				BdLog.d(mBackForwardList.toString());
+//			}
+			//removed by qumiao 2012.9.18 END>
+
+			setCurWebViewNotify(aView);
+			if (mWebPoolViewClient != null) {
+				mWebPoolViewClient.onPageFinished(BdWebPoolView.this, aUrl);
+				// 如果执行的操作是页面的前进或后退，并且拥有页面缓存，会直接执行onPageStarted和onPageFinished，
+				// 而不经过doUpdateVisitedHistory和onProgressChanged。
+				// 所以在此处将STATE_START_SHOW补上，表示页面已经开始显示。
+				int changeStateMask = STATE_PAGE_FINISHED;
+				if (mShowState == NOT_SHOW) {
+					changeStateMask |= STATE_START_SHOW;
+				}
+				setShowState(HAS_SHOWN);
+				changeStateMask = changeStateMaskByErrorCode(BdWebPoolView.this, changeStateMask);
+
+				onStateChanged(changeStateMask, null);
+
+				// webcontent_error_code的tag用来标记该页面是否是一个错误页。
+				// 此tag应该是在onPageFinished里清掉，而不是在onPageStarted里剔除，
+				// 因为这个tag是在上一个页面的onReceivedError发起的，之后就会经过onPageStarted加载默认错误页。
+				setTag(R.id.webcontent_error_code, 0);
+			}
+		}
+
+		@Override
+		public void onLoadResource(BdWebView aView, String aUrl) {
+		    //<removed by qumiao 2012.9.18 BEGIN
+            //使用单WebView，让其自己控制前进后退历史列表
+//			// 由于水木bbs等frame嵌套的页面，没有回调onPageStart和onPageFinish，这里需要检查WebView的currentIndex有没有增长
+//			// 如果有增长，则添加前进后退项
+//			int newNativeIndex = getNewItemIndex(aView, aUrl);
+//			if (newNativeIndex >= 0) {
+//				String newUrl = aView.getUrl();
+//				// 如果当前的url不是要添加的url，则不添加
+//				BdWebHistoryItem item = aView.copyBackForwardList().getItemAtIndex(newNativeIndex);
+//				if (item != null) {
+//					String nativeUrl = item.getUrl();
+//					if (newUrl != null && newUrl.equals(nativeUrl)) {
+//						addBackForwardItem(aView, newUrl, newNativeIndex, true);
+//					} else {
+//						BdLog.w("not the item to add. " + newUrl + ", " + nativeUrl);
+//					}
+//				}
+//			}
+		    //removed by qumiao 2012.9.18 END>
+		}
+
+		@Override
+		public void onReceivedError(BdWebView view, int errorCode, String description, String failingUrl) {
+			BdLog.d(errorCode + ", " + description);
+			if (mWebPoolViewClient != null) {
+				mWebPoolViewClient.onReceivedError(BdWebPoolView.this, errorCode, description, failingUrl);
+			}
+
+			// 设上webcontent_error_code的tag，表示下一次加载的页面将会是错误页。
+			setTag(R.id.webcontent_error_code, errorCode);
+		}
+
+		@Override
+		public void onReceivedSslError(BdWebView view, BdSslErrorHandler handler, BdSslError error) {
+			BdLog.d("");
+			handler.proceed();
+			hideErrorPage();
+		}
+
+		@Override
+		public void doUpdateVisitedHistory(BdWebView view, String url, boolean isReload) {
+			if (url != null) { // url ==null表示是从onReceivedError过来的，不应该置START_SHOW。
+				// 在doUpdateVisitedHistory触发后的下一次onProgressChanged时开始显示页面。
+				// 所以此处将START_SHOW置上，以便在onProgressChanged时通知页面已开始显示。
+				setShowState(START_SHOW);
+			}
+			
+			//<add by qumiao 2012.07.30 BEGIN
+			//记录站点信息到数据库中
+			// FIXME 应该放到更上层中处理
+			if (!TextUtils.equals(Browser.HOME_PAGE, url) && !isReload) {
+			    VisitedSiteControl control = VisitedSiteControl.getInstance(getContext());
+			    mVisitedSite.setUrl(url);
+			    mVisitedSite.setTitle(getTitle());
+			    mVisitedSite.setIcon(null);
+			    mVisitedSite.setTime(System.currentTimeMillis());
+			    control.insertVisitedSite(mVisitedSite);
+			    
+			    //StatisticProcessor.addOnlyValueUEStatisticCache(getContext(), key, mVisitedSite.toJsonString());
+			}
+            //add by qumiao 2012.07.30 END>
+            
+			super.doUpdateVisitedHistory(view, url, isReload);
+		}
+	}
+
+	/**
+	 * BdWebPoolCustomChromeClient
+	 */
+	class BdWebPoolCustomChromeClient extends BdWebChromeClient {
+
+		/** BdWebView Wrapper */
+		private SoftReference<BdWebView> mWebViewWrapper;
+		
+		/**
+		 * obtain WebView Wrapper
+		 * 
+		 * @param aWebView
+		 *            WebView
+		 * @return WebView Wrapper
+		 */
+		public BdWebView obtainWebViewWrapper(WebView aWebView) {
+			BdWebView result = null;
+			if (mWebViewWrapper != null) {
+				result = mWebViewWrapper.get();
+			}
+
+			if (result == null || !result.isContains(aWebView)) {
+				result = new BdWebPoolCustomView(BdWebPoolView.this, aWebView);
+				mWebViewWrapper = new SoftReference<BdWebView>(result);
+			}
+			return result;
+		}
+
+		@Override
+		public void onProgressChanged(BdWebView aView, int aNewProgress) {
+			setCurWebViewNotify(aView);
+			if (mWebPoolChromeClient != null) {
+				mWebPoolChromeClient.onProgressChanged(BdWebPoolView.this, aNewProgress);
+				// 如果显示状态为START_SHOW，表示doUpdateVisitedHistory已触发，
+				// 本次的onProgressChanged之后就会开始显示页面。
+				int changeStateMask = STATE_PROGRESS_CHANGED;
+				if (mShowState == START_SHOW) {
+					changeStateMask |= STATE_START_SHOW;
+					setShowState(HAS_SHOWN);
+					// 正在联网时，不知结果是否显示错误页，所以先隐藏，再后面需要时再显示出来
+					hideErrorPage();
+				}
+				// 如果联网了就清除错误码
+				if (aNewProgress <= PROGRESS_MIN) {
+					setErrorCode(0);
+				}
+
+				if (mWebPoolViewClient != null) {
+					onStateChanged(changeStateMask, aNewProgress);
+				}
+
+				if (aNewProgress == 100) {
+					hideMaskView();
+				}
+			}
+		}
+
+		@Override
+		public void onReceivedTitle(BdWebView aView, String aTitle) {
+			setCurWebViewNotify(aView);
+			if (mWebPoolChromeClient != null) {
+				mWebPoolChromeClient.onReceivedTitle(BdWebPoolView.this, aTitle);
+				int changeStateMask = changeStateMaskByErrorCode(BdWebPoolView.this, STATE_PAGE_RECEIVED);
+				if (mWebPoolViewClient != null) {
+					onStateChanged(changeStateMask, null);
+				}
+			}
+			
+			VisitedSiteControl control = VisitedSiteControl.getInstance(getContext());
+			mVisitedSite.setUrl(getUrl());
+			mVisitedSite.setTitle(aTitle);
+            control.updateVisitedSite(mVisitedSite);
+		}
+
+		@Override
+		public void onReceivedIcon(BdWebView view, Bitmap icon) {
+		    super.onReceivedIcon(view, icon);
+		    VisitedSiteControl control = VisitedSiteControl.getInstance(getContext());
+            VisitedSite site = new VisitedSite();
+            mVisitedSite.setUrl(getUrl());
+            mVisitedSite.setIcon(icon);
+            control.updateVisitedSite(site);
+		}
+		
+		@Override
+		public Bitmap getDefaultVideoPoster() {
+			return null;
+		}
+
+		@Override
+		public View getVideoLoadingProgressView() {
+			return null;
+		}
+
+		@Override
+		public boolean onCreateWindow(BdWebView view, boolean dialog, boolean userGesture, Message resultMsg) {
+			if (mWebPoolChromeClient != null) {
+				WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+				BdWebView.BdWebViewTransport bdTransport = view.new BdWebViewTransport(transport);
+				return mWebPoolChromeClient.onCreateWindow(BdWebPoolView.this, dialog, userGesture,
+						resultMsg, bdTransport);
+			} else {
+				return false;
+			}
+		}
+
+		@Override
+		public void onCloseWindow(BdWebView window) {
+		}
+
+        // <modify begin by caohaitao 20120907, 解决视频播放不能横屏问题。
+        @Override
+        public void onHideCustomView() {
+            hideCustomView();
+        }
+
+        @Override
+        public void onShowCustomView(View view, BdCustomViewCallback callback) {
+            Context context = getContext();
+            Activity activity = null;
+            if (context instanceof Activity) {
+                activity = (Activity) context;
+            }
+            
+            if (activity != null) {
+                onShowCustomView(view, activity.getRequestedOrientation(), callback);
+            }
+        }
+        
+        @Override
+        public void onShowCustomView(View view, int requestedOrientation, BdCustomViewCallback callback) {
+            showCustomView(view, requestedOrientation, callback);
+        }
+        // modify end by caohaitao 20120907>
+
+
+
+		// For Android 3.0+
+		@Override
+		public void openFileChooser(BdValueCallback<Uri> uploadMsg, String acceptType) { // SUPPRESS CHECKSTYLE
+			if (mWebPoolChromeClient != null) {
+				mWebPoolChromeClient.openFileChooser(uploadMsg, acceptType);
+			}
+		}
+
+		// For Android < 3.0
+		@Override
+		public void openFileChooser(BdValueCallback<Uri> uploadMsg) { // SUPPRESS CHECKSTYLE
+			if (mWebPoolChromeClient != null) {
+				mWebPoolChromeClient.openFileChooser(uploadMsg);
+			}
+		}
+
+		/**
+		 * Instructs the client to show a prompt to ask the user to set the
+		 * Geolocation permission state for the specified origin.
+		 */
+		public void onGeolocationPermissionsShowPrompt(String origin,
+				BdGeolocationPermissions.BdCallback callback) {
+			if (mWebPoolChromeClient != null) {
+				mWebPoolChromeClient.onGeolocationPermissionsShowPrompt(origin, callback);
+			}
+		}
+
+		/**
+		 * Instructs the client to hide the Geolocation permissions prompt.
+		 */
+		public void onGeolocationPermissionsHidePrompt() {
+			if (mWebPoolChromeClient != null) {
+				mWebPoolChromeClient.onGeolocationPermissionsHidePrompt();
+			}
+		}
+	}
+
+	/**
+	 * BdWebPoolCustomJsClient
+	 */
+	class BdWebPoolCustomJsClient extends BdWebJsClient {
+
+		@Override
+		public void onGoBack(BdWebView view) {
+			goBack();
+		}
+
+		@Override
+		public void onGoForward(BdWebView view) {
+			goForward();
+		}
+
+		@Override
+		public void onGo(BdWebView view, int aSteps) {
+			// Fixme: 没有实现多步
+			if (aSteps < 0) {
+				goBack();
+			} else if (aSteps > 0) {
+				goForward();
+			}
+		}
+
+		@Override
+		public void onClick(BdWebView view, String aUrl) {
+			setClickLink(view, aUrl);
+		}
+
+		@Override
+		public void onCallbackFinished(BdWebView view) {
+		}
+
+	}
+
+}
