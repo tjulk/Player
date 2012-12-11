@@ -1,23 +1,13 @@
-/** 
- * Filename:    BdRootView.java
- * Description:  
- * Copyright:   Baidu MIC Copyright(c)2011 
- * @author:     CoCoMo 
- * @version:    1.0
- * Create at:   2012-4-20 ионГ11:11:39
- * 
- * Modification History: 
- * Date         Author      Version     Description 
- * ------------------------------------------------------------------ 
- * 2012-4-20    CoCoMo      1.0         1.0 Version 
- */
+ 
 package com.baidu.browser.core.ui;
 
 import android.content.Context;
 import android.view.View;
-
 /**
- * Root View
+ * @ClassName: BdRootView 
+ * @Description: Root View
+ * @author LEIKANG 
+ * @date 2012-12-11 обнГ5:19:46
  */
 public class BdRootView extends View {
 

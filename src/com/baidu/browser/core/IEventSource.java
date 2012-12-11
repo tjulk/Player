@@ -3,7 +3,10 @@ package com.baidu.browser.core;
 import android.os.Message;
 
 /**
- * 事件源接口类
+ * @ClassName: IEventSource 
+ * @Description:事件源接口类 
+ * @author LEIKANG 
+ * @date 2012-12-11 下午5:18:08
  */
 public interface IEventSource {
 

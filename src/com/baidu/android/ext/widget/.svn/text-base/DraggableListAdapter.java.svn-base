@@ -1,0 +1,53 @@
+package com.baidu.android.ext.widget;
+
+import java.util.List;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+
+import com.baidu.searchbox.R;
+
+/**
+ * DraggableListView配套的adapter
+ * 特定的模版和视觉样式
+ * 
+ * @author qiaopu
+ */
+public class DraggableListAdapter<T> extends ArrayAdapter<T> {
+
+    /**
+     * 构造函数
+     * @param context context
+     * @param list 在ListView显示的对象列表
+     */
+    public DraggableListAdapter(Context context, List<T> list) {
+        super(context, R.layout.ding_manager_item, R.id.title, list);
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        View row = super.getView(position, convertView, parent);
+        
+        // 行背景
+        View item = row.findViewById(R.id.ding_background);
+        if (getCount() == 1) {
+            // 全圆角
+            item.setBackgroundResource(R.drawable.ding_manager_item_single_bg);
+        } else {
+            if (position == 0) {
+                // 顶部圆角图标
+                item.setBackgroundResource(R.drawable.ding_manager_item_top_bg);
+            } else if (position == getCount() - 1) {
+                // 底部圆角图标
+                item.setBackgroundResource(R.drawable.ding_manager_item_bottom_bg);
+            } else {
+                // 无圆角
+                item.setBackgroundResource(R.drawable.ding_manager_item_normal_bg);
+            }
+        }
+
+        return row;
+    }
+}

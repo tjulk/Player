@@ -1,7 +1,9 @@
 package com.baidu.browser.core.ui;
-
 /**
- * 弹出菜单监听类
+ * @ClassName: BdPopMenuListener 
+ * @Description: 弹出菜单监听类
+ * @author LEIKANG 
+ * @date 2012-12-11 下午5:19:28
  */
 public interface BdPopMenuListener {
 

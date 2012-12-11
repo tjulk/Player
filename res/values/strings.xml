@@ -13,25 +13,30 @@
     <string name="geolocation_permissions_prompt_toast_allowed">"此网站可以访问您所在的地点。</string>
     <string name="geolocation_permissions_prompt_toast_disallowed">"此网站无法访问您所在的地点。</string>
     
-     <!-- 错误页文案 -->
-     <string name="webview_error_retry_button">刷新</string>
-     <string name="webview_error_back_button">返回</string>
-     <string name="webview_error_file_not_found">要访问的页面不存在</string>
-     <string name="webview_error_fail_resion">可能的原因有：</string>
-     <string name="webview_error_fail_resion_one">• 无法连接网络</string>
-     <string name="webview_error_fail_resion_two">• 该网页不存在或出现故障</string>
-     <string name="web_setting">设置网络>></string>
-     <string name="webview_error_fail_connection">无法访问该网页！</string>  
-     
-     <!-- 长按选词 -->
-     <string name="text_selection_tip">滑动选择搜索内容</string>
-	 <string name="text_selection_fail_tip">选词不成功，请重新选择！</string>
-	 <string name="text_selection_ok_tip">内容已复制，长按输入框可粘贴</string>
-	 <string name="copy">复制</string>
-	 <string name="search">搜索</string>
-	 
-	 <!-- 分享 -->
-	 <string name="share_content">"<xliff:g id="text">%s</xliff:g> <xliff:g id="link">%s</xliff:g> (分享自@百度APP)"</string>
-	 <string name="share_waiting">"正在准备分享..."</string>
-	 <string name="share_channel">"分享方式"</string>
+    <!-- 错误页文案 -->
+    <string name="webview_error_retry_button">刷新</string>
+    <string name="webview_error_back_button">返回</string>
+    <string name="webview_error_file_not_found">要访问的页面不存在</string>
+    <string name="webview_error_fail_resion">可能的原因有：</string>
+    <string name="webview_error_fail_resion_one">• 无法连接网络</string>
+    <string name="webview_error_fail_resion_two">• 该网页不存在或出现故障</string>
+    <string name="web_setting">设置网络>></string>
+    <string name="webview_error_fail_connection">无法访问该网页！</string>
+
+    <!-- 长按选词 -->
+    <string name="text_selection_tip">滑动选择搜索内容</string>
+    <string name="text_selection_fail_tip">选词不成功，请重新选择！</string>
+    <string name="text_selection_ok_tip">内容已复制，长按输入框可粘贴</string>
+    <string name="copy">复制</string>
+    <string name="search">搜索</string>
+
+    <!-- 分享 -->
+    <string name="share_content">"<xliff:g id="text">%s</xliff:g><xliff:g id="link">%s</xliff:g> (分享自@百度APP)"</string>
+    <string name="share_waiting">"正在准备分享..."</string>
+    <string name="share_channel">"分享方式"</string>
+    
+    <!-- 搜索页 -->
+    <string name="search_nohistory_tips">没有搜索历史</string>
+    <string name="search_nohistory_privatemode_tips">隐私模式不记录搜索和浏览历史</string>
+    <string name="search_close_private_mode">关闭隐私模式</string>
 </resources>

@@ -1,16 +1,3 @@
-/** 
- * Filename:    BdUtil.java
- * Description:  
- * Copyright:   Baidu MIC Copyright(c)2011 
- * @author:     CoCoMo 
- * @version:    1.0
- * Create at:   2012-4-23 обнГ09:11:42
- * 
- * Modification History: 
- * Date         Author      Version     Description 
- * ------------------------------------------------------------------ 
- * 2012-4-23    CoCoMo      1.0         1.0 Version 
- */
 package com.baidu.browser.core.util;
 
 import android.content.Context;
@@ -18,7 +5,10 @@ import android.content.Context;
 import com.baidu.browser.core.BdCore;
 
 /**
- * BdUtil
+ * @ClassName: BdUtil 
+ * @Description: BdUtil
+ * @author LEIKANG 
+ * @date 2012-12-11 обнГ5:20:45
  */
 public final class BdUtil {
 

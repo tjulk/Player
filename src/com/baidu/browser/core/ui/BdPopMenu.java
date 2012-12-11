@@ -14,7 +14,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 /**
- * 弹出菜单类
+ * @ClassName: BdPopMenu 
+ * @Description: 弹出菜单类 
+ * @author LEIKANG 
+ * @date 2012-12-11 下午5:18:40
  */
 public class BdPopMenu extends LinearLayout implements OnClickListener {
 

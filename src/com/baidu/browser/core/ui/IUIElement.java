@@ -1,23 +1,12 @@
-/** 
- * Filename:    IUIElement.java
- * Description:  
- * Copyright:   Baidu MIC Copyright(c)2011 
- * @author:     CoCoMo 
- * @version:    1.0
- * Create at:   2012-4-24 下午03:35:33
- * 
- * Modification History: 
- * Date         Author      Version     Description 
- * ------------------------------------------------------------------ 
- * 2012-4-24    CoCoMo      1.0         1.0 Version 
- */
 package com.baidu.browser.core.ui;
 
 import com.baidu.browser.core.IElement;
 import com.baidu.browser.core.IEventSource;
-
 /**
- * UI元素接口
+ * @ClassName: IUIElement 
+ * @Description: UI元素接口
+ * @author LEIKANG 
+ * @date 2012-12-11 下午5:20:01
  */
 public interface IUIElement extends IElement, IEventSource {
 

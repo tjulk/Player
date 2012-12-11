@@ -1,25 +1,12 @@
-/** 
- * Filename:    BdLog.java 
- * Description:  
- * Copyright:   Baidu MIC Copyright(c)2011 
- * @author:     gong.haiping 
- * @version:    1.1 
- * Create at:   2011-4-19 下午12:16:22 
- * 
- * Modification History: 
- * Date         Author      Version     Description 
- * ------------------------------------------------------------------ 
- * 2011-4-19   gong.haiping      1.0         1.0 Version 
- * 2011-7-30   CoCoMo            1.1         Add  printStackTrace
- * 2011-8-1    CoCoMo            1.2         Modify Tag Name
- * 2011-11-18    gong.haiping            1.3         Add printStackTrace API
- */
 package com.baidu.browser.core.util;
 
 import android.util.Log;
 
 /**
- * Log输出类
+ * @ClassName: BdLog 
+ * @Description: 浏览器 Log输出类 
+ * @author LEIKANG 
+ * @date 2012-12-11 下午5:20:22
  */
 public final class BdLog {
 

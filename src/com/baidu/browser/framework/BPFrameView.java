@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,14 +14,16 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.MeasureSpec;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.baidu.browser.BPBrowser;
 import com.baidu.browser.core.ui.BdPopMenuGroup;
 import com.baidu.player.R;
+import com.baidu.player.SearchActivity;
 import com.baidu.player.ui.FakeProgressBar;
 import com.baidu.player.ui.FloatPlayerSearchLayout;
 import com.baidu.webkit.sdk.BValueCallback;
@@ -104,7 +107,7 @@ public class BPFrameView extends FrameLayout{
 	
 	/** Browser 主类 */
 	private BPBrowser mBrowser;
- 
+	
 	/**
 	 * @param context
 	 */
@@ -134,7 +137,7 @@ public class BPFrameView extends FrameLayout{
 		mToolBarShadowDis = context.getResources().getDimensionPixelSize(R.dimen.browser_float_toolbar_shadow);
 		
 		mFloatSearch = (FloatPlayerSearchLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.float_player_search, null);
-		mFloatSearch.setEnableStartSearch(true);
+		mFloatSearch.setEnableStartSearch(false);
 		mFloatSearch.setStopLoadingOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -157,7 +160,109 @@ public class BPFrameView extends FrameLayout{
         mToolbarShadow.setBackgroundResource(R.drawable.float_toolbar_shadow);
         addView(mToolbarShadow, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,mToolBarShadowDis));
 		
+        initToolbar();
+        initFuncListener();
+        initFloatSearch();
 	}
+	
+	/**
+	 * @Title: initToolbar 
+	 * @Description: 初始化Toolbar的状态。  
+	 */
+	private void initToolbar() {
+	    ImageButton backView = (ImageButton) mToolbar.findViewById(R.id.browser_back);
+        backView.setEnabled(false);
+
+        View forwardView = mToolbar.findViewById(R.id.browser_forward);
+        forwardView.setEnabled(false);
+        
+        View album = mToolbar.findViewById(R.id.browser_album);
+        album.setEnabled(false);
+        
+        //设置窗口数量
+        ImageView windowsCount = (ImageView) mToolbar.findViewById(R.id.browser_multiwindows);
+        windowsCount.setEnabled(false);
+        windowsCount.setImageLevel(0);
+ 
+	}
+	
+	/**
+	 * @Title: initFloatSearch 
+	 * @Description: 初始化搜索框点击事件
+	 */
+	private void initFloatSearch() {
+		OnClickListener listener = new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				switch (v.getId()) {
+				case R.id.SearchTextInput:
+					startSearchActivity(false);
+					break;
+				case R.id.brow_edit_search_first:
+					startSearchActivity(true);
+					break;
+				default:
+					break;
+				}
+			}
+		};
+		mFloatSearch.findViewById(R.id.SearchTextInput).setOnClickListener(listener);
+		mFloatSearch.findViewById(R.id.brow_edit_search_first).setOnClickListener(listener);
+	}
+
+	/**
+	 * @Title: startSearchActivity 
+	 * @Description: 进入搜索页面 
+	 * @param isStartFromSearch 参数表示是否为点击搜索按钮进入   
+	 */
+	private void startSearchActivity(boolean isStartFromSearch) {
+        Intent intent = new Intent(getContext(), SearchActivity.class);
+        intent.putExtra(SearchActivity.TAG_IS_START_FROM_SEARCH, isStartFromSearch);
+        getContext().startActivity(intent);
+	}
+	
+	/**
+	 * 初始化各个功能按钮的监听。
+	 * */
+	private void initFuncListener() {
+		OnClickListener listener = new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				switch (v.getId()) {
+					case R.id.browser_back:
+						goBack();
+						break;
+					case R.id.browser_forward:
+						goForward();
+						break;
+					case R.id.browser_bottom_menu:
+						Toast.makeText(getContext(), "browser_bottom_menu", Toast.LENGTH_SHORT).show();
+						break;
+					case R.id.browser_album:
+						Toast.makeText(getContext(), "browser_album", Toast.LENGTH_SHORT).show();
+						break;
+					case R.id.browser_multiwindows:
+						Toast.makeText(getContext(), "browser_multiwindows", Toast.LENGTH_SHORT).show();
+						break;
+					case R.id.browser_personal:
+						Toast.makeText(getContext(), "browser_personal", Toast.LENGTH_SHORT).show();
+						break;
+					default:
+						break;
+				}
+			}
+		};
+		
+		mToolbar.findViewById(R.id.browser_back).setOnClickListener(listener);
+		mToolbar.findViewById(R.id.browser_forward).setOnClickListener(listener);
+		mToolbar.findViewById(R.id.browser_bottom_menu).setOnClickListener(listener);
+		mToolbar.findViewById(R.id.browser_album).setOnClickListener(listener);
+		mToolbar.findViewById(R.id.browser_multiwindows).setOnClickListener(listener);
+		mToolbar.findViewById(R.id.browser_personal).setOnClickListener(listener);
+
+	}
+
 	
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -214,6 +319,11 @@ public class BPFrameView extends FrameLayout{
 				if (childView.equals(mFloatSearch)) {
 					childView.layout(0, layoutTop, getWidth(), layoutTop + height);
 					layoutTop += height;
+				} else if (childView.equals(mSearchboxShadow)) {
+					childView.layout(0, layoutTop, getWidth(), layoutTop + height);
+				} else if (childView.equals(mToolbarShadow)) {
+				    childView.layout(0, getHeight() - mToolbarHeight - mToolBarShadowDis,
+				                     getWidth(), getHeight() - mToolbarHeight);
 				} else if (childView instanceof ImageView) {
 				    childView.layout(0, layoutTop, getWidth(), layoutTop + height);
 				} else if (childView.equals(mProgressBar)) {
@@ -632,12 +742,97 @@ public class BPFrameView extends FrameLayout{
 	}
 
 	/**
-	 * @Title: updateState 
-	 * @Description: 刷新窗口状态 底部工具栏等 
-	 * @param bpWindow   
+	 * @Title: updateState
+	 * @Description: 刷新窗口状态 底部工具栏等
+	 * @param bpWindow
 	 */
 	public void updateState(BPWindow bpWindow) {
-		//TODO 
+		if (bpWindow == null) {
+			return;
+		}
+
+		if (bpWindow.equals(mCurrentWindow)) {
+			/** 进度条相关 */
+			if (mCurrentWindow != null) {
+				updateProgressBar();
+				if (mCurrentWindow.isShowLoadingIcon()) {
+					mFloatSearch.showStopLoadingIcon();
+				} else {
+					mFloatSearch.hideStopLoadingIcon();
+				}
+
+				View refreshOrStop = mFloatSearch.findViewById(R.id.brow_top_refresh_stop);
+				if (refreshOrStop != null) {
+					if (mCurrentWindow.isHomePage()) {
+						// TODO 更新刷新停止按钮状态和图标
+					} else {
+						if (mCurrentWindow.getCurrentPageProgerss() != 0) {
+
+						} else {
+
+						}
+					}
+				}
+			}
+			/** 工具条相关 */
+			boolean canGoBack = canGoBack();
+			boolean canGoForword = canGoForward();
+			ImageButton backView = (ImageButton) findViewById(R.id.browser_back);
+			if (backView != null) {
+				boolean enabled = false;
+				if (canGoBack) {
+					backView.setImageResource(R.drawable.browser_back);
+					enabled = true;
+				}
+				backView.setFocusable(enabled);
+				backView.setEnabled(enabled);
+			}
+
+			View forwardView = findViewById(R.id.browser_forward);
+			if (forwardView != null) {
+				forwardView.setEnabled(canGoForword);
+				forwardView.setFocusable(canGoForword);
+			}
+
+			// 设置窗口数量
+			ImageView windowsCount = (ImageView) findViewById(R.id.browser_multiwindows);
+			windowsCount.setImageLevel(mWindowList.size());
+
+		}
+	}
+	
+	/**
+	 * 更新进度条
+	 */
+	private void updateProgressBar() {
+	    if (mCurrentWindow != null) {
+	        if (mCurrentWindow.isHomePage()) {
+	            mProgressBar.reset();
+	            return;
+	        }
+	        int progress = mCurrentWindow.getCurrentPageProgerss();
+	        FakeProgressBar progressBar = mProgressBar;
+	        int current = progressBar.getRealProgress();
+	        if (progress == BPBrowser.PROGRESS_MAX) {
+                mProgressBar.hide();
+                mCurrentWindow.setCurrentPageProgerss(0);
+            } else if (current == 0 && progress != 0 && progress != BPBrowser.PROGRESS_MAX) {
+	            mProgressBar.start();
+	        } else if (current > progress && current > 0) {
+	            //当前进度比进条度设置的进度要小，进度条可能发生了重置。
+	            //一种常见的情况是进入加载中进入多窗口后返回后，加载一个新页面
+	            mProgressBar.start();
+	        }
+	        progressBar.setProgress(progress);
+	        
+	        int visiblity = progressBar.getVisibility();
+ 
+	        if (progress != 0 && progress != BPBrowser.PROGRESS_MAX && visiblity != VISIBLE ) {
+	            progressBar.setVisibility(VISIBLE);
+	        } else if (progress == 0 && visiblity == VISIBLE) {
+	            progressBar.reset();
+	        }
+	    }
 	}
 
 	/**

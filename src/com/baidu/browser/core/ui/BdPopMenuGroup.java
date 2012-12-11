@@ -3,22 +3,17 @@ package com.baidu.browser.core.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import android.content.Context;
-import android.content.res.ColorStateList;
-import android.content.res.Resources.NotFoundException;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
 
 /**
- * 
- * 公用弹出菜单控件
- * 
- * @author xuhui
- * @version 1.0
- * 
+ * @ClassName: BdPopMenuGroup 
+ * @Description: 公用弹出菜单控件
+ * @author LEIKANG 
+ * @date 2012-12-11 下午5:18:53
  */
 public class BdPopMenuGroup extends FrameLayout {
 

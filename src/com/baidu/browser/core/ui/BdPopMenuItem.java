@@ -11,10 +11,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.baidu.player.R;
-
 /**
- * 菜单项
+ * @ClassName: BdPopMenuItem 
+ * @Description: 菜单项 
+ * @author LEIKANG 
+ * @date 2012-12-11 下午5:19:12
  */
 public class BdPopMenuItem extends LinearLayout {
 	

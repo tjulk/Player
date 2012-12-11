@@ -2,7 +2,10 @@ package com.baidu.player.ui;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
+
+import com.baidu.player.R;
 /**
  * @ClassName: FloatPlayerSearchLayout 
  * @Description: 
@@ -21,6 +24,9 @@ import android.widget.RelativeLayout;
 public class FloatPlayerSearchLayout extends RelativeLayout{
 	
 	private Context mContext;
+	
+    /** ËÑË÷¿òÄÚÈÝ. */
+    private EditText mSearchTextInput = null;
 	
 	/**
 	 * @param context
@@ -48,13 +54,38 @@ public class FloatPlayerSearchLayout extends RelativeLayout{
         super(context, attrs, defStyle);
         this.mContext = context;
     }
+    
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        init(mContext);
+    }
+    
+    /**
+     * @Title: init 
+     * @Description: ³õÊ¼»¯
+     * @param context   
+     */
+    private void init(Context context) {
+    	mSearchTextInput = (EditText) findViewById(R.id.SearchTextInput);
+    }
 
 	public void setEnableStartSearch(boolean b) {
+        mSearchTextInput.setFocusable(b);
+        mSearchTextInput.setFocusableInTouchMode(b);
+	}
+
+	public void setStopLoadingOnClickListener(OnClickListener onClickListener) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	public void setStopLoadingOnClickListener(OnClickListener onClickListener) {
+	public void showStopLoadingIcon() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void hideStopLoadingIcon() {
 		// TODO Auto-generated method stub
 		
 	}

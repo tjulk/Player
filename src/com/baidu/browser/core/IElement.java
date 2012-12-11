@@ -4,7 +4,10 @@ import android.content.Context;
 import android.os.Bundle;
 
 /**
- * Element Interface
+ * @ClassName: IElement 
+ * @Description:Element Interface
+ * @author LEIKANG 
+ * @date 2012-12-11 обнГ5:17:46
  */
 public interface IElement {
 

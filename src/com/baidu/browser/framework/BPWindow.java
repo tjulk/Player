@@ -741,9 +741,6 @@ public class BPWindow extends FrameLayout implements BPExploreViewListener{
 
 		@Override
 		public void onPageStarted(BPWebPoolView view, String url, Bitmap favicon) {
-			
-			System.out.println("#######################");
-			
             // ◊“≥”Î‰Ø¿¿“≥«–ªª
 		    final boolean isHomeUrl = TextUtils.equals(url, BPBrowser.HOME_PAGE);
             if (isHomeUrl) {
@@ -856,6 +853,11 @@ public class BPWindow extends FrameLayout implements BPExploreViewListener{
 	public void setUpSelect() {
 		mExploreView.emulateShiftHeld();
 		Toast.makeText(getContext(), R.string.text_selection_tip, 0).show();
+	}
+
+	public boolean isShowLoadingIcon() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

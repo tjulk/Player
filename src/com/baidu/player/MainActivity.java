@@ -59,19 +59,8 @@ public class MainActivity extends BaseActivity {
             fragmentTransaction.add(R.id.layout_for_fragment,browser, BPBrowser.FRAGMENT_TAG);
             fragmentTransaction.commitAllowingStateLoss();
             
-            mHandler.sendEmptyMessageDelayed(0, 2000);
         }
 	}
-	
-	private Handler mHandler = new Handler() {
-	    
-	    @Override
-	    public void handleMessage(Message msg) {
-	    	FragmentManager manager = getSupportFragmentManager();
-	    	BPBrowser browser = (BPBrowser) manager.findFragmentByTag(BPBrowser.FRAGMENT_TAG);
-		    browser.loadUrl("http://www.baidu.com/");
-	    }
-	};
 
 	@Override
 	protected void onNewIntent(Intent intent) {

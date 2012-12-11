@@ -32,7 +32,7 @@ public class BPBrowser extends Fragment{
     public static final String FRAGMENT_TAG = "BPBrowser";
     
     /** 首页URL.*/
-    public static final String HOME_PAGE = "file:///android_asset/htmls/home.html";
+    public static final String HOME_PAGE = "http://m.iqiyi.com";
     
 	/** 进度条最小值。 */
 	public static final int PROGRESS_MIN = 10;

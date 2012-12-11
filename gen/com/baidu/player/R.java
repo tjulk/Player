@@ -120,16 +120,18 @@ public final class R {
         public static final int home_bg_block=0x7f02003a;
         public static final int home_toolbar_bg=0x7f02003b;
         public static final int mainview_tabs_divise=0x7f02003c;
-        public static final int null_drawable=0x7f020046;
+        public static final int null_drawable=0x7f020048;
         public static final int overscroll_edge=0x7f02003d;
         public static final int overscroll_glow=0x7f02003e;
-        public static final int progress=0x7f02003f;
-        public static final int progress_thumb=0x7f020040;
-        public static final int refurbish_nomal=0x7f020041;
-        public static final int refurbish_pressed=0x7f020042;
-        public static final int searchbox_clear_text=0x7f020043;
-        public static final int searchbox_inputbox_bg=0x7f020044;
-        public static final int searchbox_panel_button_background_selector=0x7f020045;
+        public static final int private_mode_tips_bg=0x7f02003f;
+        public static final int progress=0x7f020040;
+        public static final int progress_thumb=0x7f020041;
+        public static final int refurbish_nomal=0x7f020042;
+        public static final int refurbish_pressed=0x7f020043;
+        public static final int search_sug_list_bg=0x7f020044;
+        public static final int searchbox_clear_text=0x7f020045;
+        public static final int searchbox_inputbox_bg=0x7f020046;
+        public static final int searchbox_panel_button_background_selector=0x7f020047;
     }
     public static final class id {
         public static final int MainRoot=0x7f060026;
@@ -150,6 +152,7 @@ public final class R {
         public static final int devise=0x7f06001d;
         public static final int dont_share_button=0x7f06000a;
         public static final int edit_search_first_layout=0x7f060018;
+        public static final int empty_view=0x7f06002a;
         public static final int float_LogoBtn=0x7f06001e;
         public static final int float_MainRoot=0x7f060017;
         public static final int float_SearchPanel=0x7f06001b;
@@ -165,6 +168,10 @@ public final class R {
         public static final int message=0x7f060007;
         public static final int refurbish_button=0x7f060015;
         public static final int remember=0x7f060008;
+        public static final int search_close_private_mode=0x7f06002d;
+        public static final int search_suggestion_empty_privatemode_tips=0x7f06002c;
+        public static final int search_suggestion_empty_tips=0x7f06002b;
+        public static final int search_suggestion_list=0x7f060029;
         public static final int searchbar_progress_bar=0x7f06000b;
         public static final int select_separator_one=0x7f060004;
         public static final int share_button=0x7f060009;
@@ -183,6 +190,8 @@ public final class R {
         public static final int float_player_search=0x7f030005;
         public static final int homeview=0x7f030006;
         public static final int main=0x7f030007;
+        public static final int search=0x7f030008;
+        public static final int swipe_listview=0x7f030009;
     }
     public static final class string {
         public static final int activity_not_found=0x7f080001;
@@ -197,6 +206,11 @@ public final class R {
         public static final int geolocation_permissions_prompt_toast_allowed=0x7f080006;
         public static final int geolocation_permissions_prompt_toast_disallowed=0x7f080007;
         public static final int search=0x7f080014;
+        public static final int search_close_private_mode=0x7f08001a;
+        public static final int search_nohistory_privatemode_tips=0x7f080019;
+        /**  搜索页 
+         */
+        public static final int search_nohistory_tips=0x7f080018;
         public static final int share_channel=0x7f080017;
         /**  分享 
          */
@@ -221,6 +235,8 @@ public final class R {
     public static final class style {
         public static final int BdWaitingDialog=0x7f090000;
         public static final int NoTitle=0x7f090001;
+        public static final int NoTitle_AnimationTranslucent=0x7f090004;
+        public static final int NoTitleNoAnimation=0x7f090003;
         /**  搜索框内容文字样式 
          */
         public static final int searchbox_edittext_style=0x7f090002;

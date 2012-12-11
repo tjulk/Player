@@ -3,6 +3,12 @@ package com.baidu.browser.core;
 import android.app.Activity;
 import android.content.Context;
 
+/**
+ * @ClassName: BdCore 
+ * @Description: TODO(这里用一句话描述这个类的作用) 
+ * @author LEIKANG 
+ * @date 2012-12-11 下午5:17:37
+ */
 public final class BdCore {
 
 	/** BdCore */

@@ -1,20 +1,10 @@
-/** 
- * Filename:    BdLayerView.java
- * Description:  
- * Copyright:   Baidu MIC Copyright(c)2011 
- * @author:     CoCoMo 
- * @version:    1.0
- * Create at:   2012-4-20 上午11:11:53
- * 
- * Modification History: 
- * Date         Author      Version     Description 
- * ------------------------------------------------------------------ 
- * 2012-4-20    CoCoMo      1.0         1.0 Version 
- */
 package com.baidu.browser.core.ui;
 
 /**
- * 
+ * @ClassName: BdLayerView 
+ * @Description: TODO(这里用一句话描述这个类的作用) 
+ * @author LEIKANG 
+ * @date 2012-12-11 下午5:18:25
  */
 public class BdLayerView {
 

@@ -1,0 +1,1097 @@
+package com.baidu.android.ext.widget;
+
+import android.content.Context;
+import android.database.DataSetObserver;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.os.Handler;
+import android.os.Message;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.TranslateAnimation;
+import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+
+import com.baidu.searchbox.R;
+
+/**
+ * 支持行删除和拖拽交换顺序功能的View.用法与ListView类似<br><br>
+ * 
+ * 使用注意：<br>
+ * 1. 目前只支持ViewTypeCount是1的adapter<br>
+ * 2. 拖拽触发条件支持点击或长按，通过{@link #setTouchDraggedEvent(boolean)}来选择，{@link #isTouchDraggedEvent()}获取当前触发条件<br>
+ * 3. dragView, delView, cancelDelView, confirmedDelView不要设监听器，可能会被本组件覆盖掉<br>
+ * 4. 上面4个view分别通过id: ding_drag, ding_del, ding_cancel_del, ding_confirmed_del来指定<br>
+ * 5. 上面4个view只在对应功能可用时是visible，否则是gone<br>
+ * 
+ * @author qiaopu
+ * 
+ */
+public class DraggableListView extends FrameLayout {
+    /** DEBUG */
+    private static final boolean DEBUG = false;
+    /** LOG_TAG */
+    private static final String LOG_TAG = DraggableListView.class.getSimpleName();
+    /** VIEW_TAG_KEY */
+    private static final int VIEW_TAG_KEY = ((0x2f << 24) | android.R.id.summary);
+    /** 浮动图的 α 值 */
+    private static final int FLOW_IMAGE_ALPHA = 200;
+    /** 模式-未知 */
+    public static final int EDIT_MOD_UNKNOWN = -1;
+    /** 模式-可编辑 */
+    public static final int EDIT_MOD_AVAILABLE = 0;
+    /** 模式-不可编辑 */
+    public static final int EDIT_MOD_UNAVAILABLE = 1;
+    /** 模式-拖拽 */
+    public static final int EDIT_MOD_DRAG = 2;
+    /** 模式-删除 */
+    public static final int EDIT_MOD_DELETE = 3;
+    /** 代理的ListView */
+    private ProxyedListView mListView;
+    /** 拖拽时浮动的view */
+    private ImageView mFlowImageView;
+    /** 点触的坐标与view坐标的偏移 */
+    private float mDraggedViewOffsetY;
+    /** 点触的坐标与view坐标的偏移 */
+    private float mTranslationX;
+    /** 点触的坐标与view坐标的偏移 */
+    private float mTranslationY;
+    /** 要修改的条目索引 */
+    private int mDraggedItemPosition;
+    /** 新位置目标索引 */
+    private int mDraggedItemNextPosition;
+    /** 代理的adapter */
+    private ProxyedArrayAdapter<Object> mProxyAdapter;
+    /** ListStateChangedListener */
+    private ListStateChangedListener mListStateChangedListener;
+    /** 当前编辑模式 */
+    private int mEditMode = EDIT_MOD_UNKNOWN;
+    /** 当前拖拽触发模式 */
+    private boolean mIsTouchDraggedEvent;
+
+    /** 长按拖拽按钮监听 */
+    private OnLongClickListener mLongClickDraggedButtonListener = new OnLongClickListener() {
+
+        @Override
+        public boolean onLongClick(View v) {
+            return onDraggedEvent(v);
+        }
+    };
+
+    /** 点击拖拽按钮监听 */
+    private OnTouchListener mTouchDraggedButtonListener = new OnTouchListener() {
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if (event.getAction() != MotionEvent.ACTION_DOWN) {
+                return false;
+            }
+
+            return onDraggedEvent(v);
+        }
+    };
+
+    /** 删除按钮的OnClickListener */
+    private OnClickListener mDelOnClickListener = new OnClickListener() {
+        
+        @Override
+        public void onClick(View v) {
+            int currentItemPosition = ((Integer) v.getTag(VIEW_TAG_KEY)).intValue();
+            if (mEditMode == EDIT_MOD_DRAG) {
+                mDraggedItemPosition = currentItemPosition;
+                changedEditMode(EDIT_MOD_DELETE);
+            }
+        }
+    };
+    /** 取消删除按钮的OnClickListener */
+    private OnClickListener mCancelDelOnClickListener = new OnClickListener() {
+        
+        @Override
+        public void onClick(View v) {
+            changedEditMode(EDIT_MOD_DRAG);
+        }
+    };
+    /** 确认删除按钮的OnClickListener */
+    private OnClickListener mConfirmedDelOnClickListener = new OnClickListener() {
+        
+        @Override
+        public void onClick(View v) {
+            int currentItemPosition = ((Integer) v.getTag(VIEW_TAG_KEY)).intValue();
+            ArrayAdapter<Object> arrayAdapter = mProxyAdapter.arrayAdapter;
+            Object item = arrayAdapter.getItem(currentItemPosition);
+            arrayAdapter.remove(item);
+            
+            if (mListStateChangedListener != null) {
+                mListStateChangedListener.onDelete(currentItemPosition);
+            }
+            
+            changedEditMode(EDIT_MOD_DRAG);
+            if (DEBUG) {
+                Log.v(LOG_TAG, "currentItemPosition: " + currentItemPosition);
+            }
+        }
+    };
+
+    /**
+     * 构造
+     * @param context context
+     * @param attrs attrs
+     * @param defStyle defStyle
+     */
+    public DraggableListView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        initSelf(context, attrs, defStyle);
+    }
+
+    /**
+     * 构造
+     * @param context context
+     * @param attrs attrs
+     */
+    public DraggableListView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initSelf(context, attrs, 0);
+    }
+
+    /**
+     * 构造
+     * @param context context
+     */
+    public DraggableListView(Context context) {
+        super(context);
+        initSelf(context, null, 0);
+    }
+
+    /**
+     * 初始化子view
+     * @param context context
+     * @param attrs attrs
+     * @param defStyle defStyle
+     */
+    private void initSelf(Context context, AttributeSet attrs, int defStyle) {
+        
+        // frameLayout不用padding
+        setPadding(0, 0, 0, 0);
+        setSaveEnabled(false);
+        
+        mListView = new ProxyedListView(context, attrs, defStyle);
+        mListView.setSaveEnabled(false);
+        addView(mListView, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        
+        mFlowImageView = new ImageView(context);
+        mFlowImageView.setSaveEnabled(false);
+        mFlowImageView.setVisibility(GONE);
+        setFlowImageBackgroundResource(R.drawable.ding_manager_item_drag_shadow);
+        addView(mFlowImageView, new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        
+        mListView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (mFlowImageView.getVisibility() != View.VISIBLE) {
+                        mDraggedViewOffsetY = event.getY();
+                    }
+                    break;
+                    
+                case MotionEvent.ACTION_UP:
+                    if (mFlowImageView.getVisibility() == View.VISIBLE) {
+                        // animation
+                        int index = mDraggedItemNextPosition - mListView.getFirstVisiblePosition()
+                                + mListView.getHeaderViewsCount();
+                        View movedView = mListView.getChildAt(index);
+                        movedView.setVisibility(VISIBLE);
+                        float flowImageTop = mTranslationY;
+                        startAnimation(movedView, 0, 0, flowImageTop - movedView.getTop(), 0);
+                        
+                        // clean flowImageView
+                        mFlowImageView.setVisibility(View.GONE);
+                        mFlowImageView.setImageBitmap(null);
+                        mFlowImageView.invalidate();
+                        mListView.mHandler.sendEmptyMessage(ProxyedListView.MESSAGE_UPDATE_DING_LIST);
+                        return true;
+                    }
+                    break;
+                    
+                case MotionEvent.ACTION_MOVE:
+                    float pointerX = event.getX();
+                    float pointerY = event.getY();
+
+                    if (mFlowImageView.getVisibility() != View.VISIBLE) {
+                        return false;
+                    }
+
+                    float nextTranslationY = pointerY - mDraggedViewOffsetY;
+                    // 最小translationY
+                    if (mFlowImageView.getTop() + nextTranslationY < 0) {
+                        nextTranslationY = -mFlowImageView.getTop();
+                    }
+                    // 最大translationY
+                    float maxTranslationY = ((View) mFlowImageView.getParent()).getHeight();
+                    if (mFlowImageView.getBottom() + nextTranslationY > maxTranslationY) {
+                        nextTranslationY = maxTranslationY - mFlowImageView.getBottom();
+                    }
+                    mTranslationY = nextTranslationY;
+                    DraggableListView.this.invalidate();
+
+                    int firstVisiblePosition = mListView.getFirstVisiblePosition();
+                    int lastVisiblePosition = mListView.getLastVisiblePosition();
+                    int minItemPosition = mListView.getHeaderViewsCount();
+                    int maxItemPosition = mListView.getCount() - mListView.getFooterViewsCount() - 1;
+
+                    int beginViewIndex = (firstVisiblePosition > minItemPosition ? firstVisiblePosition
+                            : minItemPosition) - firstVisiblePosition;
+                    int endViewIndex = (lastVisiblePosition < maxItemPosition ? lastVisiblePosition : maxItemPosition)
+                            - firstVisiblePosition;
+
+                    int pointeredViewIndex = mListView.pointToPosition((int) pointerX, (int) pointerY)
+                            - firstVisiblePosition;
+
+                    // 索引不在头和尾之间
+                    if (pointeredViewIndex == ListView.INVALID_POSITION || pointeredViewIndex < beginViewIndex
+                            || pointeredViewIndex > endViewIndex) {
+                        return true;
+                    }
+
+                    // 对应adapter中的位置
+                    int pointeredItemPosition = pointeredViewIndex + firstVisiblePosition - minItemPosition;
+
+                    // 与上一次不同时，需要改变位置
+                    if (pointeredItemPosition != mDraggedItemNextPosition) {
+                        int step = pointeredItemPosition < mDraggedItemNextPosition ? -1 : 1;
+                        int nextItemPosition = mDraggedItemNextPosition;
+
+                        // 中间每个索引都挪位置
+                        while (nextItemPosition != pointeredItemPosition) {
+                            if (DEBUG) {
+                                Log.v(LOG_TAG, "next: " + nextItemPosition + "," + (nextItemPosition + step));
+                            }
+                            Message msg = Message.obtain();
+                            msg.what = ProxyedListView.MESSAGE_ARRIVING_NEW_POSITION;
+                            msg.arg1 = nextItemPosition;
+                            nextItemPosition += step;
+                            msg.arg2 = nextItemPosition;
+                            mListView.mHandler.sendMessage(msg);
+                        }
+
+                        mDraggedItemNextPosition = pointeredItemPosition;
+                    }
+
+                    return true;
+
+                default:
+                }
+                return false;
+            }
+        });
+    }
+    
+    /**
+     * 代理ListView
+     * @see ListView#getHeaderViewsCount()
+     * @return count
+     */
+    public int getHeaderViewsCount() {
+        return mListView.getHeaderViewsCount();
+    }
+    
+    /**
+     * 设置列表状态改变监听
+     * @param l ListStateChangedListener
+     */
+    public void setListStateChangedListener(ListStateChangedListener l) {
+        mListStateChangedListener = l;
+    }
+    
+    /**
+     * 代理ListView
+     * @see ListView#addHeaderView(View, Object, boolean)
+     * @param v v
+     * @param data data
+     * @param isSelectable isSelectable
+     */
+    public void addHeaderView(View v, Object data, boolean isSelectable) {
+        mListView.addHeaderView(v, data, isSelectable);
+    }
+    
+    /**
+     * 代理ListView
+     * @see ListView#addFooterView(View, Object, boolean)
+     * @param v v
+     * @param data data
+     * @param isSelectable isSelectable
+     */
+    public void addFooterView(View v, Object data, boolean isSelectable) {
+        mListView.addFooterView(v, data, isSelectable);
+    }
+    
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        
+        // 当ListView大小发生改变时，要重新计算view type
+        if (mProxyAdapter != null) {
+            mProxyAdapter.maxKnownViewType = 0;
+            mProxyAdapter.nextNewPosition = 0;
+        }
+    }
+    
+    /**
+     * 代理ListView
+     * 会初始化状态，如果已经设置监听了就可以响应
+     * @see ListView#setAdapter(ListAdapter)
+     * @param adapter adapter
+     */
+    public void setAdapter(final ArrayAdapter adapter) {
+        // 判断viewTypeCount是否符合要求
+        if (adapter.getViewTypeCount() > 1) { // SUPPRESS CHECKSTYLE
+            throw new RuntimeException("本组件目前只支持ViewTypeCount是1的adapter。。。");
+        }
+
+        mProxyAdapter = new ProxyedArrayAdapter<Object>(adapter);        
+        mListView.setAdapter(mProxyAdapter);
+        // 初始化状态
+        changedEditMode(EDIT_MOD_AVAILABLE, false);
+    }
+    
+    /**
+     * 从view创建截图
+     * @param v view
+     * @return 截图
+     */
+    private Bitmap buildBitmap(View v) {
+        boolean willNotCache = v.willNotCacheDrawing();
+        v.setWillNotCacheDrawing(false);
+        
+        // Reset the drawing cache background color to fully
+        // transparent
+        // for the duration of this operation
+        int color = v.getDrawingCacheBackgroundColor();
+        v.setDrawingCacheBackgroundColor(0);
+        
+        if (color != 0) {
+            v.destroyDrawingCache();
+        }
+        v.buildDrawingCache();
+        Bitmap viewBitmap = v.getDrawingCache();
+        int width = viewBitmap.getWidth();
+        int height = viewBitmap.getHeight();
+        
+        Matrix scale = new Matrix();
+        scale.setScale(1, 1);
+        
+        Bitmap bitmap = Bitmap.createBitmap(viewBitmap, 0, 0, width, height, scale, true);
+        
+        v.destroyDrawingCache();
+        v.setWillNotCacheDrawing(willNotCache);
+        v.setDrawingCacheBackgroundColor(color);
+        
+        return bitmap;
+    }
+    
+    @Override
+    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+        if (child == mFlowImageView) {
+            if (child.getVisibility() == VISIBLE) {
+                canvas.save();
+                canvas.translate(mTranslationX, mTranslationY);
+                boolean result = super.drawChild(canvas, child, drawingTime);
+                canvas.restore();
+                return result;
+            }
+        }
+        return super.drawChild(canvas, child, drawingTime);
+    }
+
+    
+    /**
+     * 启动动画
+     * @param v view
+     * @param fromXDelta fromXDelta
+     * @param toXDelta toXDelta
+     * @param fromYDelta fromYDelta
+     * @param toYDelta toYDelta
+     */
+    private void startAnimation(final View v, float fromXDelta, float toXDelta, float fromYDelta, float toYDelta) {
+        TranslateAnimation ani = new TranslateAnimation(fromXDelta, toXDelta, fromYDelta, toYDelta);
+        ani.setInterpolator(new DecelerateInterpolator());
+        int duration = 200; //SUPPRESS CHECKSTYLE
+        ani.setDuration(duration);
+        ani.setAnimationListener(new AnimationListener() {
+            
+            @Override
+            public void onAnimationStart(Animation animation) {
+                v.setVisibility(View.INVISIBLE);
+            }
+            
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+            
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                v.setVisibility(View.VISIBLE);
+            }
+        });
+        v.startAnimation(ani);
+    }
+    
+    /**
+     * 编辑模式
+     * @return 编辑模式
+     */
+    public int getEditMode() {
+        return mEditMode;
+    }
+    
+    /**
+     * 改变编辑模式并invalidateViews
+     * @see DraggableListView#changedEditMode(int, boolean)
+     * @param newEditMode newEditMode
+     * @return 是否成功改变状态，如果已经是新状态就不在改变
+     */
+    public boolean changedEditMode(int newEditMode) {
+        return changedEditMode(newEditMode, true);
+    }
+    
+    /**
+     * 改变编辑模式
+     * @param newEditMode newEditMode
+     * @param needInvalidateViews 是否需要invalidate
+     * @return 是否成功改变状态，如果已经是新状态就不在改变
+     */
+    public boolean changedEditMode(int newEditMode, boolean needInvalidateViews) {
+        // 先检查
+        if (newEditMode == EDIT_MOD_AVAILABLE && checkEditModeUnavailable()) {
+            newEditMode = EDIT_MOD_UNAVAILABLE;
+        }
+        
+        if (mEditMode != newEditMode) {
+            // 通知监听改变
+            if (mListStateChangedListener != null) {
+                mListStateChangedListener.onEditModeChanged(mEditMode, newEditMode);
+            }
+            mEditMode = newEditMode;
+            
+            if (needInvalidateViews) {
+                mListView.invalidateViews();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 处理拖拽事件
+     * 
+     * @param v 被拖拽的view
+     */
+    private boolean onDraggedEvent(View v) {
+        if (mEditMode != EDIT_MOD_DRAG || v == null) {
+            return false;
+        }
+
+        int currentItemPosition = ((Integer) v.getTag(VIEW_TAG_KEY)).intValue();
+        v.clearFocus();
+        v.setPressed(false);
+
+        // 找到list中的item
+        View listItem;
+        try {
+            do {
+                listItem = v;
+                v = (View) listItem.getParent();
+            } while (!mListView.equals(v));
+
+        } catch (ClassCastException e) {
+            // We made it up to the window without find this list view
+            return false;
+        }
+
+        Bitmap dragedBitmap = buildBitmap(listItem);
+
+        mFlowImageView.setVisibility(View.VISIBLE);
+        mFlowImageView.setImageBitmap(dragedBitmap);
+        mFlowImageView.setAlpha(FLOW_IMAGE_ALPHA);
+
+        mTranslationX = listItem.getLeft() - mFlowImageView.getPaddingLeft();
+        mTranslationY = listItem.getTop() - mFlowImageView.getPaddingTop();
+        mDraggedViewOffsetY -= listItem.getTop() - mFlowImageView.getPaddingTop();
+
+        mFlowImageView.invalidate();
+
+        listItem.setVisibility(View.INVISIBLE);
+
+        // 找出item 在 list 中对应的index
+        mDraggedItemPosition = currentItemPosition;
+        mDraggedItemNextPosition = mDraggedItemPosition;
+
+        if (DEBUG) {
+            Log.v(LOG_TAG, "mDraggedViewIndex: " + mDraggedItemPosition);
+        }
+
+        return true;
+    }
+    
+    /**
+     * 设置浮动图的背景
+     * 要在{@link #setAdapter(ArrayAdapter)}前指定
+     * @see View#setBackgroundResource(int)
+     * @param resid resource id
+     */
+    public void setFlowImageBackgroundResource(int resid) {
+        checkIfChangeStateAvailable();
+        mFlowImageView.setBackgroundResource(resid);
+    }
+
+    /**
+     * 指定某一位置的拖拽事件是否是触摸触发
+     * 
+     * @return 是触摸触发，否则是长按触发
+     */
+    public boolean isTouchDraggedEvent() {
+        return mIsTouchDraggedEvent;
+    }
+    
+    /**
+     * 指定某一位置的拖拽事件是否是触摸触发
+     * 要在{@link #setAdapter(ArrayAdapter)}前指定
+     * 
+     * @param isTouch true是触摸触发，否则是长按触发
+     */
+    public void setTouchDraggedEvent(boolean isTouch) {
+        checkIfChangeStateAvailable();
+        mIsTouchDraggedEvent = isTouch;
+    }
+
+    /**
+     * 检查当前是否可以改变属性的状态
+     */
+    private void checkIfChangeStateAvailable() {
+        if (mProxyAdapter != null) {
+            throw new RuntimeException("要在setAdapter()前指定!");
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasWindowFocus) {
+        super.onWindowFocusChanged(hasWindowFocus);
+        
+        // 当window失去焦点时，清理浮动图的状态
+        if (mFlowImageView.getVisibility() == View.VISIBLE) {
+            int index = mDraggedItemNextPosition - mListView.getFirstVisiblePosition()
+                    + mListView.getHeaderViewsCount();
+            View movedView = mListView.getChildAt(index);
+            movedView.setVisibility(VISIBLE);
+            
+            // clean flowImageView
+            mFlowImageView.setVisibility(View.GONE);
+            mFlowImageView.setImageBitmap(null);
+            mFlowImageView.invalidate();
+        }
+    }
+
+    /**
+     * 检查状态，如果需要切换不可编辑状态则返回true
+     * @return 是否需要切换
+     */
+    public boolean checkEditModeUnavailable() {
+        int count = mProxyAdapter.arrayAdapter.getCount();
+        if (count <= 1) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * 代理ListAdapter
+     * @author qiaopu
+     *
+     */
+    class ProxyedArrayAdapter<T> implements ListAdapter {
+        /** ArrayAdapter */
+        public ArrayAdapter<T> arrayAdapter;
+        /** 最大的已知type，用这个来记录view type的范围 */
+        int maxKnownViewType = 0;
+        /**
+         * 下一个未知的position
+         * 因为ListView调用{@link #getItemViewType(int)}时总是顺序的从0开始，因此可以确定下一个位置
+         */
+        int nextNewPosition = 0;
+        
+        /**
+         * ProxyedArrayAdapter
+         * @param adapter ArrayAdapter
+         */
+        public ProxyedArrayAdapter(ArrayAdapter<T> adapter) {
+            arrayAdapter = adapter;
+        }
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (DEBUG) {
+                if (convertView == null) {
+                    Log.v(LOG_TAG, "pos: " + position + " convertView is null!!!\t" + getItemViewType(position));
+                } else {
+                    Log.v(LOG_TAG, "pos: " + position + " convertView is reused!!\t" + getItemViewType(position));
+                }
+            }
+            View view = arrayAdapter.getView(position, convertView, parent);
+            view.setTag(VIEW_TAG_KEY, position);
+            initDraggedButton(position, view.findViewById(R.id.ding_drag));
+            initDeleteButton(position, view.findViewById(R.id.ding_del));
+            initCancelDelButton(position, view.findViewById(R.id.ding_cancel_del));
+            initConfirmedDelButton(position, view.findViewById(R.id.ding_confirmed_del));
+            return view;
+        }
+        /**
+         * 初始化拖动按钮
+         * @param position 索引
+         * @param v 拖动按钮
+         */
+        private void initDraggedButton(int position, View v) {
+            v.setTag(VIEW_TAG_KEY, position);
+            int visibility = mEditMode == EDIT_MOD_DRAG
+                    || ((mEditMode == EDIT_MOD_DELETE && position != mDraggedItemPosition)) ? VISIBLE : GONE;
+            v.setVisibility(visibility);
+
+            if (mIsTouchDraggedEvent) {
+                v.setOnTouchListener(mTouchDraggedButtonListener);
+                v.setOnLongClickListener(null);
+            } else {
+                v.setOnTouchListener(null);
+                v.setOnLongClickListener(mLongClickDraggedButtonListener);
+            }
+        }
+        /**
+         * 初始化删除按钮
+         * @param position 索引
+         * @param v 删除按钮
+         */
+        private void initDeleteButton(int position, View v) {
+            v.setTag(VIEW_TAG_KEY, position);
+            int visibility = mEditMode == EDIT_MOD_DRAG
+                    || ((mEditMode == EDIT_MOD_DELETE && position != mDraggedItemPosition)) ? VISIBLE : GONE;
+            
+            v.setVisibility(visibility);
+            v.setOnClickListener(mDelOnClickListener);
+        }
+        /**
+         * 初始化删除取消按钮
+         * @param position 索引
+         * @param v 删除确认按钮
+         */
+        private void initCancelDelButton(int position, View v) {
+            v.setTag(VIEW_TAG_KEY, position);
+            int visibility = (mEditMode == EDIT_MOD_DELETE && position == mDraggedItemPosition) ? VISIBLE : GONE;
+            v.setVisibility(visibility);
+            
+            v.setOnClickListener(mCancelDelOnClickListener);
+        }
+        /**
+         * 初始化删除确认按钮
+         * @param position 索引
+         * @param v 删除确认按钮
+         */
+        private void initConfirmedDelButton(int position, View v) {
+            v.setTag(VIEW_TAG_KEY, position);
+            int visibility = (position == mDraggedItemPosition && mEditMode == EDIT_MOD_DELETE) ? VISIBLE : GONE;
+            v.setVisibility(visibility);
+            
+            v.setOnClickListener(mConfirmedDelOnClickListener);
+        }
+        @Override
+        public void unregisterDataSetObserver(DataSetObserver observer) {
+            arrayAdapter.unregisterDataSetObserver(observer);
+        }
+        @Override
+        public void registerDataSetObserver(DataSetObserver observer) {
+            arrayAdapter.registerDataSetObserver(observer);
+        }
+        @Override
+        public boolean isEmpty() {
+            return arrayAdapter.isEmpty();
+        }
+        @Override
+        public boolean hasStableIds() {
+            return arrayAdapter.hasStableIds();
+        }
+        @Override
+        public int getViewTypeCount() {
+            // 根据经验值，不会一屏显示超过100个item
+            return Math.min(100, Math.max(1, arrayAdapter.getCount())); //SUPPRESS CHECKSTYLE
+        }
+        
+        /**
+         * 获取已知的view type
+         * 当已经调用过该position的getItemViewType方法后，可以调本方法取type
+         * @param position 位置
+         * @return viewType
+         */
+        private int getKnownItemViewType(int position) {
+            if (position < nextNewPosition) {
+                return (position % maxKnownViewType);
+            }
+            
+            return -1;
+        }
+        
+        @Override
+        public int getItemViewType(int position) {
+            // 已知type
+            int viewType = getKnownItemViewType(position);
+            
+            if (viewType >= 0) {
+                return viewType;
+            }
+
+            // 是未知type
+            nextNewPosition++;
+            
+            // 现看看有没有空闲
+            View firstView = mListView.getChildAt(0);
+            if (firstView != null) {
+                Object tag = firstView.getTag(VIEW_TAG_KEY);
+                if (tag != null) {
+                    int firstPosition = ((Integer) tag).intValue();
+                    // 找到空闲
+                    if (firstPosition > 0) {
+                        return ((firstPosition - 1 + maxKnownViewType) % maxKnownViewType);
+                    }
+                }
+            }
+            
+            // 新type
+            viewType = maxKnownViewType;
+            maxKnownViewType++;
+            
+            return viewType;
+        }
+        @Override
+        public long getItemId(int position) {
+            return arrayAdapter.getItemId(position);
+        }
+        @Override
+        public Object getItem(int position) {
+            return arrayAdapter.getItem(position);
+        }
+        @Override
+        public int getCount() {
+            return arrayAdapter.getCount();
+        }
+        @Override
+        public boolean isEnabled(int position) {
+            return arrayAdapter.isEnabled(position);
+        }
+        @Override
+        public boolean areAllItemsEnabled() {
+            return arrayAdapter.areAllItemsEnabled();
+        }
+    }
+    
+/**
+ * 封装一个ListView来处理
+ */
+private class ProxyedListView extends ListView {
+
+	/** 发送给Handler的消息-到达新位置 */
+	private static final int MESSAGE_ARRIVING_NEW_POSITION = 4;
+	/** 发送给Handler的消息-更新ding列表*/
+	private static final int MESSAGE_UPDATE_DING_LIST = 5;
+	/** 发送给Handler的消息-更新浮动图*/
+	private static final int MESSAGE_UPDATE_FLOW_IMAGE = 7;
+	/** 发送给Handler的消息-开始滚动*/
+	private static final int MESSAGE_START_SCROLL = 8;
+	/** 发送给Handler的消息-滚动*/
+	private static final int MESSAGE_SCROLL = 9;
+	/** 发送给Handler的消息-结束滚动*/
+	private static final int MESSAGE_FINISH_SCROLL = 10;
+    /** touch监听 */
+    private OnTouchListener mOnTouchListener;
+
+	/**
+	 * 构造函数
+	 * @param context 上下文对象
+	 * @param attrs attrs
+	 * @param defStyle defstyle
+	 */
+	public ProxyedListView(Context context, AttributeSet attrs, int defStyle) {
+		super(context, attrs, defStyle);
+	}
+	
+	@Override
+	public void invalidateViews() {
+	    // 检查
+        if (checkEditModeUnavailable()) {
+            changedEditMode(EDIT_MOD_UNAVAILABLE, false);
+        }
+        super.invalidateViews();
+	}
+
+	@Override
+	public boolean onInterceptTouchEvent(MotionEvent ev) {
+	    if (mOnTouchListener != null && mOnTouchListener.onTouch(this, ev)) {
+	        return true;
+	    }
+		return super.onInterceptTouchEvent(ev);
+	}
+
+	/**
+	 * 滚动
+	 * @param offsetY 偏移量
+	 */
+    public void scrollBy(int offsetY) {
+        int index = getFirstVisiblePosition();
+        View view = getChildAt(0);
+        int top = view != null ? view.getTop() : 0;
+        
+        setSelectionFromTop(index, top + offsetY);
+        clearFocus();
+    }
+	
+    /** 滚动偏移量 */
+    int scrollDelta;
+    /** 滚动延时 */
+    private static final int SCROLL_DELAYED_MILLIS = 25;
+
+	/**
+	 * 用来处理2个Item UI交换位置后,延迟一定时间后才去执行真正数据操作.
+	 */
+	Handler mHandler = new Handler() {
+		public void handleMessage(Message msg) {
+
+			switch (msg.what) {
+			case MESSAGE_ARRIVING_NEW_POSITION:
+			    handleArrivingNewPosition(msg);
+			    break;
+			    
+			case MESSAGE_UPDATE_FLOW_IMAGE:
+                handleUpdateFlowImage(msg);
+			    break;
+			    
+			case MESSAGE_UPDATE_DING_LIST:
+			    handleUpdateDingList(msg);
+			    break;
+			    
+			case MESSAGE_START_SCROLL:
+			    handleStartScroll(msg);
+			    break;
+			    
+			case MESSAGE_FINISH_SCROLL:
+			    handleFinishScroll(msg);
+			    break;
+			    
+			case MESSAGE_SCROLL:
+			    handleScroll(msg);
+			    break;
+
+			default:
+			}
+		}
+
+        /**
+         * 处理滚动
+         * @param msg msg
+         */
+        private void handleScroll(Message msg) {
+            Message nextMsg = Message.obtain();
+            nextMsg.what = MESSAGE_SCROLL;
+            nextMsg.arg1 = msg.arg1;
+            sendMessageDelayed(nextMsg, SCROLL_DELAYED_MILLIS);
+            
+            scrollDelta -= (msg.arg1 + msg.arg2);
+            mListView.scrollBy(msg.arg1);
+        }
+
+        /**
+         * 处理滚动结束
+         * @param msg msg
+         */
+        private void handleFinishScroll(Message msg) {
+            removeMessages(MESSAGE_START_SCROLL);
+            removeMessages(MESSAGE_SCROLL);
+            mListView.scrollBy(scrollDelta);
+        }
+
+		/**
+		 * 处理滚动开始
+		 * @param msg
+		 */
+        private void handleStartScroll(Message msg) {
+            removeMessages(MESSAGE_START_SCROLL);
+            removeMessages(MESSAGE_SCROLL);
+            removeMessages(MESSAGE_FINISH_SCROLL);
+
+            int currentPosition = msg.arg1;
+            int oldFirstVisiblePosition = msg.arg2;
+
+            // 如果FirstVisiblePosition变了，currentPosition也要调整
+            int currentFirstVisiblePosition = mListView.getFirstVisiblePosition();
+            if (oldFirstVisiblePosition != currentFirstVisiblePosition) {
+                currentPosition += (oldFirstVisiblePosition - currentFirstVisiblePosition);
+            }
+
+            View view = mListView.getChildAt(currentPosition);
+
+            if (view.getTop() < view.getHeight()) {
+                scrollDelta = view.getHeight();
+            } else if (view.getBottom() + view.getHeight() > mListView.getHeight()) {
+                scrollDelta = -view.getHeight();
+            } else {
+                scrollDelta = 0;
+                return;
+            }
+
+            int scrollStep = 10; //SUPPRESS CHECKSTYLE
+            Message nextMsg = Message.obtain();
+            nextMsg.what = MESSAGE_SCROLL;
+            nextMsg.arg1 = scrollDelta < 0 ? -scrollStep : scrollStep;
+            nextMsg.arg2 = scrollDelta % scrollStep;
+            sendMessage(nextMsg);
+            
+            int timeBuffer = 2; //SUPPRESS CHECKSTYLE
+            sendEmptyMessageDelayed(MESSAGE_FINISH_SCROLL,
+                    SCROLL_DELAYED_MILLIS * (Math.abs(scrollDelta / scrollStep) + timeBuffer));
+        }
+
+        /**
+         * 处理更新ding列表
+         * @param msg msg
+         */
+        private void handleUpdateDingList(Message msg) {
+            removeMessages(MESSAGE_START_SCROLL);
+            removeMessages(MESSAGE_SCROLL);
+            removeMessages(MESSAGE_FINISH_SCROLL);
+            
+            if (mListStateChangedListener != null) {
+                mListStateChangedListener.onFinishMove(mDraggedItemPosition, mDraggedItemNextPosition);
+            }
+            if (DEBUG) {
+                Log.v(LOG_TAG, "onFinishMove");
+            }
+        }
+
+        /**
+         * 处理更新浮动图
+         * @param msg
+         */
+        private void handleUpdateFlowImage(Message msg) {
+            Bitmap newBitmap = buildBitmap((View) msg.obj);
+            mFlowImageView.setImageBitmap(newBitmap);
+            mFlowImageView.invalidate();
+            if (DEBUG) {
+                Log.v(LOG_TAG, "MESSAGE_UPDATE_FLOW_IMAGE");
+            }
+        }
+
+		/**
+		 * 处理命中新位置
+		 * @param msg msg
+		 */
+        private void handleArrivingNewPosition(Message msg) {
+            int fromItemPosition;
+            int toItemPosition;
+            fromItemPosition = msg.arg1;
+            toItemPosition = msg.arg2;
+            if (DEBUG) {
+                Log.v(LOG_TAG, "from: " + fromItemPosition + " to: " + toItemPosition);
+            }
+            
+            ArrayAdapter<Object> arrayAdapter = mProxyAdapter.arrayAdapter;
+            arrayAdapter.setNotifyOnChange(false);
+            Object item = arrayAdapter.getItem(fromItemPosition);
+            arrayAdapter.remove(item);
+            arrayAdapter.insert(item, toItemPosition);
+            arrayAdapter.notifyDataSetChanged();
+            
+            if (mListStateChangedListener != null) {
+                mListStateChangedListener.onMove(fromItemPosition, toItemPosition);
+            }
+            
+            int firstPosion = mListView.getFirstVisiblePosition();
+            int minItemPosition = mListView.getHeaderViewsCount();
+            final View fromView = mListView.getChildAt(fromItemPosition - firstPosion + minItemPosition);
+            final View toView = mListView.getChildAt(toItemPosition - firstPosion + minItemPosition);
+            
+            if (fromView == null || toView == null) {
+                if (DEBUG) {
+                    Log.v(LOG_TAG, "view is null!!");
+                }
+                return;
+            }
+            
+            // 新位置是不可见的，旧位置是可见的，如果需要动画则是多余的
+//            fromView.setVisibility(View.VISIBLE);
+            toView.setVisibility(View.INVISIBLE);
+            
+            DraggableListView.this.startAnimation(fromView, 0, 0, toView.getTop() - fromView.getTop(), 0);
+            
+            mListView.invalidate();
+            
+            // 更新flowImage
+            Message nextMsg = Message.obtain();
+            nextMsg.what = MESSAGE_UPDATE_FLOW_IMAGE;
+            nextMsg.obj = toView;
+            sendMessage(nextMsg);
+            
+            // scroll
+            nextMsg = Message.obtain();
+                nextMsg.what = ProxyedListView.MESSAGE_START_SCROLL;
+                nextMsg.arg1 = mDraggedItemNextPosition - mListView.getFirstVisiblePosition()
+                        + mListView.getHeaderViewsCount();
+                nextMsg.arg2 = mListView.getFirstVisiblePosition();
+            sendMessage(nextMsg);
+        }
+	};
+
+    @Override
+    public void setOnTouchListener(OnTouchListener l) {
+        mOnTouchListener = l;
+        super.setOnTouchListener(l);
+    }
+}
+
+    /**
+     * list状态改变监听
+     */
+    public interface ListStateChangedListener {
+        /**
+         * 将被拖拽的条目从from位置移到to位置
+         * 
+         * @param from 初始位置
+         * @param to 停留位置
+         */
+        void onMove(int from, int to);
+    
+        /**
+         * 将选中的条目删除
+         * 
+         * @param position 被选中的条目索引号
+         */
+        void onDelete(int position);
+        
+        /**
+         * 移动完成
+         * @param from 初始位置
+         * @param to 停留位置
+         */
+        void onFinishMove(int from, int to);
+        
+        /**
+         * 编辑模式改变
+         * @param oldMode 旧状态
+         * @param newMode 新状态
+         */
+        void onEditModeChanged(int oldMode, int newMode);
+    }
+}
