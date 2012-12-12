@@ -3,6 +3,7 @@ package com.baidu.browser;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -549,6 +550,11 @@ public class BPBrowser extends Fragment{
 		Message onRequestCopyHref();  
 
 		void onDismissPopMenu();
+	}
+
+	public void initFromIntent(Intent intent) {
+		// TODO Auto-generated method stub
+		
 	}
     
 }

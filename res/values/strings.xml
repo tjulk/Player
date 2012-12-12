@@ -39,4 +39,17 @@
     <string name="search_nohistory_tips">没有搜索历史</string>
     <string name="search_nohistory_privatemode_tips">隐私模式不记录搜索和浏览历史</string>
     <string name="search_close_private_mode">关闭隐私模式</string>
+    <string name="search_clear_history">清空搜索历史</string>
+    <string name="search_clear_history_tips">是否清空搜索历史?</string>
+    <string name="suggestion_open_private_mode">开启隐私模式</string>
+    <string name="no_search_history">暂无搜索历史</string>
+    <string name="web_clear_history">清空浏览记录</string>
+    <string name="no_web_history">暂无浏览记录</string>
+    <string name="brow_search_insert">百度影音</string>
+    <string name="brow_address_go_search_text">搜索\"%s\"关键字</string>
+    <string name="brow_search_no_suggestion">暂无搜索提示</string>
+    <string name="search_go">搜索</string>
+    <string name="search_cancel">取消</string>
+    <string name="search_visit">访问</string>
+    <string name="search_play">播放</string>
 </resources>

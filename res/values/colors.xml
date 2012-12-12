@@ -24,4 +24,7 @@
     <color name="window_background_color">#fff4f4f4</color>
     
     <drawable name="null_drawable">#00000000</drawable> 
+    
+    <color name="sug_local_setting_text_color_normal">#626262</color>
+    <color name="sug_local_setting_text_color_press">#FFFFFF</color>
 </resources>

@@ -30,6 +30,10 @@ public final class R {
         public static final int popmenu_textcolor=0x7f050006;
         public static final int refurbish_button_color=0x7f05000a;
         public static final int ssl_text_label=0x7f050005;
+        public static final int sug_local_setting_text_color_normal=0x7f05000c;
+        public static final int sug_local_setting_text_color_press=0x7f05000d;
+        public static final int suggestion_description_textcolor=0x7f05000e;
+        public static final int suggestion_title_textcolor=0x7f05000f;
         public static final int toolbar_gradient_end_color=0x7f050001;
         public static final int toolbar_gradient_start_color=0x7f050000;
         /**  地理位置信息设置框用到的颜色值 
@@ -116,22 +120,32 @@ public final class R {
         public static final int float_spinner_down=0x7f020036;
         public static final int float_spinner_up=0x7f020037;
         public static final int float_toolbar_shadow=0x7f020038;
-        public static final int home_bg=0x7f020039;
-        public static final int home_bg_block=0x7f02003a;
-        public static final int home_toolbar_bg=0x7f02003b;
-        public static final int mainview_tabs_divise=0x7f02003c;
-        public static final int null_drawable=0x7f020048;
-        public static final int overscroll_edge=0x7f02003d;
-        public static final int overscroll_glow=0x7f02003e;
-        public static final int private_mode_tips_bg=0x7f02003f;
-        public static final int progress=0x7f020040;
-        public static final int progress_thumb=0x7f020041;
-        public static final int refurbish_nomal=0x7f020042;
-        public static final int refurbish_pressed=0x7f020043;
-        public static final int search_sug_list_bg=0x7f020044;
-        public static final int searchbox_clear_text=0x7f020045;
-        public static final int searchbox_inputbox_bg=0x7f020046;
-        public static final int searchbox_panel_button_background_selector=0x7f020047;
+        public static final int histroy_sug_diver=0x7f020039;
+        public static final int home_bg=0x7f02003a;
+        public static final int home_bg_block=0x7f02003b;
+        public static final int home_toolbar_bg=0x7f02003c;
+        public static final int local_setting_nomal=0x7f02003d;
+        public static final int local_setting_press=0x7f02003e;
+        public static final int mainview_tabs_divise=0x7f02003f;
+        public static final int null_drawable=0x7f020052;
+        public static final int overscroll_edge=0x7f020040;
+        public static final int overscroll_glow=0x7f020041;
+        public static final int private_mode_tips_bg=0x7f020042;
+        public static final int progress=0x7f020043;
+        public static final int progress_thumb=0x7f020044;
+        public static final int refurbish_nomal=0x7f020045;
+        public static final int refurbish_pressed=0x7f020046;
+        public static final int search_sug_bg_normal=0x7f020047;
+        public static final int search_sug_bg_pressed=0x7f020048;
+        public static final int search_sug_bg_simple_normal=0x7f020049;
+        public static final int search_sug_keywords_normal=0x7f02004a;
+        public static final int search_sug_list_bg=0x7f02004b;
+        public static final int searchbox_clear_text=0x7f02004c;
+        public static final int searchbox_inputbox_bg=0x7f02004d;
+        public static final int searchbox_panel_button_background_selector=0x7f02004e;
+        public static final int sug_local_setting_selector=0x7f02004f;
+        public static final int suggestion_item_down_stroke=0x7f020050;
+        public static final int suggestion_list_selector_simple_bg=0x7f020051;
     }
     public static final class id {
         public static final int MainRoot=0x7f060026;
@@ -175,6 +189,22 @@ public final class R {
         public static final int searchbar_progress_bar=0x7f06000b;
         public static final int select_separator_one=0x7f060004;
         public static final int share_button=0x7f060009;
+        public static final int suggestion_clearHistroy_diver=0x7f060031;
+        public static final int suggestion_clear_history=0x7f060032;
+        public static final int suggestion_clear_history_layout=0x7f060030;
+        public static final int suggestion_item_description=0x7f06003b;
+        public static final int suggestion_item_icon=0x7f060037;
+        public static final int suggestion_item_icon2=0x7f06003a;
+        public static final int suggestion_item_icon3=0x7f060038;
+        public static final int suggestion_item_layout=0x7f060036;
+        public static final int suggestion_item_title=0x7f06003c;
+        public static final int suggestion_item_vertical_line=0x7f060039;
+        public static final int suggestion_local_provider_setting=0x7f06002f;
+        public static final int suggestion_local_provider_setting_layout=0x7f06002e;
+        public static final int suggestion_open_private_mode=0x7f060035;
+        public static final int suggestion_open_private_mode_diver=0x7f060034;
+        public static final int suggestion_open_private_mode_layout=0x7f060033;
+        public static final int suggestion_private_mode_tip=0x7f06003d;
         public static final int testView=0x7f060025;
         public static final int webcontent_error_code=0x7f060000;
         public static final int webview_error_button=0x7f060016;
@@ -191,11 +221,17 @@ public final class R {
         public static final int homeview=0x7f030006;
         public static final int main=0x7f030007;
         public static final int search=0x7f030008;
-        public static final int swipe_listview=0x7f030009;
+        public static final int suggestion_clear_history_item=0x7f030009;
+        public static final int suggestion_item=0x7f03000a;
+        public static final int suggestion_private_mode_tip_item=0x7f03000b;
+        public static final int swipe_listview=0x7f03000c;
     }
     public static final class string {
         public static final int activity_not_found=0x7f080001;
         public static final int app_name=0x7f080000;
+        public static final int brow_address_go_search_text=0x7f080022;
+        public static final int brow_search_insert=0x7f080021;
+        public static final int brow_search_no_suggestion=0x7f080023;
         public static final int copy=0x7f080013;
         public static final int geolocation_permissions_prompt_dont_share=0x7f080004;
         /**  for geolocation 
@@ -205,22 +241,32 @@ public final class R {
         public static final int geolocation_permissions_prompt_share=0x7f080003;
         public static final int geolocation_permissions_prompt_toast_allowed=0x7f080006;
         public static final int geolocation_permissions_prompt_toast_disallowed=0x7f080007;
+        public static final int no_search_history=0x7f08001e;
+        public static final int no_web_history=0x7f080020;
         public static final int search=0x7f080014;
+        public static final int search_cancel=0x7f080025;
+        public static final int search_clear_history=0x7f08001b;
+        public static final int search_clear_history_tips=0x7f08001c;
         public static final int search_close_private_mode=0x7f08001a;
+        public static final int search_go=0x7f080024;
         public static final int search_nohistory_privatemode_tips=0x7f080019;
         /**  搜索页 
          */
         public static final int search_nohistory_tips=0x7f080018;
+        public static final int search_play=0x7f080027;
+        public static final int search_visit=0x7f080026;
         public static final int share_channel=0x7f080017;
         /**  分享 
          */
         public static final int share_content=0x7f080015;
         public static final int share_waiting=0x7f080016;
+        public static final int suggestion_open_private_mode=0x7f08001d;
         public static final int text_selection_fail_tip=0x7f080011;
         public static final int text_selection_ok_tip=0x7f080012;
         /**  长按选词 
          */
         public static final int text_selection_tip=0x7f080010;
+        public static final int web_clear_history=0x7f08001f;
         public static final int web_setting=0x7f08000e;
         public static final int webview_error_back_button=0x7f080009;
         public static final int webview_error_fail_connection=0x7f08000f;

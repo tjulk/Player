@@ -3,14 +3,14 @@ package com.baidu.player;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.WindowManager;
 
 import com.baidu.browser.BPBrowser;
+import com.baidu.browser.IntentConstants;
 import com.baidu.webkit.sdk.BWebKitFactory;
  
 /**
@@ -58,14 +58,30 @@ public class MainActivity extends BaseActivity {
             FragmentTransaction fragmentTransaction = manager.beginTransaction();
             fragmentTransaction.add(R.id.layout_for_fragment,browser, BPBrowser.FRAGMENT_TAG);
             fragmentTransaction.commitAllowingStateLoss();
-            
         }
 	}
 
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		setIntent(intent);
+		
+		String action = intent.getAction();
+		if (IntentConstants.ACTION_BROWSER.equals(action)) {
+			   switchToSearchBrowser();
+		}
 	}
+	
+    /**
+     * «–ªªµΩ‰Ø¿¿ΩÁ√Ê.
+     */
+    public void switchToSearchBrowser() {
+        FragmentManager manager = getSupportFragmentManager();
+		FragmentTransaction fragmentTransaction = manager.beginTransaction();
+		BPBrowser searchBrowser = (BPBrowser) manager.findFragmentByTag(BPBrowser.FRAGMENT_TAG);
+		fragmentTransaction.attach(searchBrowser);
+		fragmentTransaction.commitAllowingStateLoss();
+    }
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {

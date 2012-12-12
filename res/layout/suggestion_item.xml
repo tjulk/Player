@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/suggestion_item_layout"
+    android:layout_width="fill_parent"
+    android:layout_height="50dip" >
+
+    <com.baidu.player.ui.NetImageView
+        android:id="@+id/suggestion_item_icon"
+        android:layout_width="43.3dip"
+        android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:duplicateParentState="true"
+        android:padding="8.33dip"
+        android:layout_marginRight="4.3dip"
+        android:scaleType="centerInside" />
+
+    <ImageView
+        android:id="@+id/suggestion_item_icon3"
+        android:layout_width="43.3dip"
+        android:layout_height="fill_parent"
+        android:layout_alignParentRight="true"
+        android:clickable="true"
+        android:focusable="true"
+        android:scaleType="centerInside"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/suggestion_item_vertical_line"
+        android:layout_width="0.5dip"
+        android:layout_height="fill_parent"
+        android:layout_toLeftOf="@id/suggestion_item_icon3"
+        android:src="@drawable/suggestion_item_down_stroke"
+        android:scaleType="centerInside"
+        android:paddingTop="15dip"
+        android:paddingBottom="15dip"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/suggestion_item_icon2"
+        android:layout_width="43.3dip"
+        android:layout_height="fill_parent"
+        android:layout_toLeftOf="@id/suggestion_item_vertical_line"
+        android:layout_alignWithParentIfMissing="true"
+        android:clickable="true"
+        android:focusable="true"
+        android:scaleType="centerInside"
+        android:visibility="visible" />
+
+    <TextView
+        android:id="@+id/suggestion_item_description"
+        android:layout_width="fill_parent"
+        android:layout_height="20dip"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@id/suggestion_item_icon2"
+        android:layout_toRightOf="@id/suggestion_item_icon"
+        android:duplicateParentState="true"
+        android:gravity="left|top"
+        android:singleLine="true"
+        android:textColor="@color/suggestion_description_textcolor"
+        android:textSize="12dip"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/suggestion_item_title"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/suggestion_item_description"
+        android:layout_alignLeft="@id/suggestion_item_description"
+        android:layout_alignRight="@id/suggestion_item_description"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@id/suggestion_item_icon2"
+        android:layout_toRightOf="@id/suggestion_item_icon"
+        android:duplicateParentState="true"
+        android:gravity="left|center_vertical"
+        android:singleLine="true"
+        android:textColor="@color/suggestion_title_textcolor"
+        android:textSize="18.6dip"
+        />
+
+</RelativeLayout>
