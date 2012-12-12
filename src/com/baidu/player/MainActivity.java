@@ -11,6 +11,7 @@ import android.view.WindowManager;
 
 import com.baidu.browser.BPBrowser;
 import com.baidu.browser.IntentConstants;
+import com.baidu.browser.SearchManager;
 import com.baidu.webkit.sdk.BWebKitFactory;
  
 /**
@@ -65,20 +66,21 @@ public class MainActivity extends BaseActivity {
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		setIntent(intent);
-		
 		String action = intent.getAction();
+		String url = intent.getStringExtra(SearchManager.TAG_KEY_URL);
 		if (IntentConstants.ACTION_BROWSER.equals(action)) {
-			   switchToSearchBrowser();
+			   switchToSearchBrowser(url);
 		}
 	}
 	
     /**
      * «–ªªµΩ‰Ø¿¿ΩÁ√Ê.
      */
-    public void switchToSearchBrowser() {
+    public void switchToSearchBrowser(String url) {
         FragmentManager manager = getSupportFragmentManager();
 		FragmentTransaction fragmentTransaction = manager.beginTransaction();
 		BPBrowser searchBrowser = (BPBrowser) manager.findFragmentByTag(BPBrowser.FRAGMENT_TAG);
+		searchBrowser.loadUrl(url);
 		fragmentTransaction.attach(searchBrowser);
 		fragmentTransaction.commitAllowingStateLoss();
     }

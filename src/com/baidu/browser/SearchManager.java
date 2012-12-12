@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import com.baidu.browser.db.HistoryConfig;
 import com.baidu.browser.db.Suggestion;
 import com.baidu.player.MainActivity;
+import com.baidu.player.R;
 import com.baidu.player.util.StringUtil;
 import com.baidu.player.util.SystemUtil;
 import com.baidu.player.util.Turple;
@@ -40,7 +41,7 @@ public final class SearchManager {
         String url = null;
         if (!TextUtils.isEmpty(query)) 
             addWebSearchHistory(query, context);
-        url = getSearchUrl(query, context);
+        url = getSearchUrl(query, context) + context.getResources().getString(R.string.brow_search_insert);
 
         // 调用浏览器，发起搜索
         if (url != null) {
@@ -48,6 +49,20 @@ public final class SearchManager {
             extras.putString(TAG_KEY_URL, url);
             startBrowser(context, extras);
         }        
+    }
+    
+    /**
+     * @Title: launchURL 
+     * @Description: 直接加載URL 
+     * @param context
+     * @param url   
+     */
+    public static void launchURL(Context context, String url) {
+        if (url != null) {
+            Bundle extras = new Bundle();
+            extras.putString(TAG_KEY_URL, url);
+            startBrowser(context, extras);
+        } 
     }
     
     /**

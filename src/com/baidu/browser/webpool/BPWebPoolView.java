@@ -1273,6 +1273,7 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
                 view.requestFocus();
             }
             mCurWebView = webview;
+            webview.requestFocus();
 		}
 		return webview;
 	}
@@ -1485,6 +1486,7 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 		if (mCurWebView != null) {
 			mCurWebView.setLoadMode(LoadMode.LOAD_NORMAL);
 			mCurWebView.loadUrl(aUrl);
+			mCurWebView.requestFocus();
 		}
 
 		hideErrorPage();

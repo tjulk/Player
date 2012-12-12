@@ -231,17 +231,9 @@ public class SearchActivity extends BaseActivity{
      * @param command   
      */
     private void executeSearchCommand(SearchBoxCommand command) { 
-            launchBrowser(mUserQuery);
-    }
-    
-    /**
-     * Æô¶¯ä¯ÀÀÆ÷·¢ÆðËÑË÷£¬µÃµ½ËÑË÷Ò³¡£
-     * @param query ËÑË÷´Ê
-     */
-    private void launchBrowser(final String query) {
-        if (TextUtils.isEmpty(query))  // ËÑË÷´ÊÎª¿Õ Ö±½Ó·µ»Ø
+        if (TextUtils.isEmpty(mUserQuery))  // ËÑË÷´ÊÎª¿Õ Ö±½Ó·µ»Ø
             return; 
-        SearchManager.launchSearch(this, query, false);
+        SearchManager.launchSearch(this, mUserQuery, false);
         finish();
     }
     
@@ -252,13 +244,12 @@ public class SearchActivity extends BaseActivity{
      * @param command   
      */
     private void executeVisitCommand(SearchBoxCommand command) {
-        String url = command.query;
+        String url = mUserQuery;
         url = Utility.fixUrl(url).trim();
         url = Utility.addSchemeIfNeed(url);
         
-		FragmentManager manager = getSupportFragmentManager();
-        BPBrowser browser = (BPBrowser) manager.findFragmentByTag(BPBrowser.FRAGMENT_TAG);
-        browser.loadUrl(url);
+        SearchManager.launchURL(this,url);
+        finish();
     }
     
     /**
