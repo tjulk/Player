@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical" 
     android:background="@drawable/home_bg"
-    android:visibility="gone">
+	>
     
     <com.baidu.player.ui.HomeScrollView
         android:id="@+id/main_view"
@@ -17,15 +17,15 @@
         android:requiresFadingEdge="none"
         android:scrollbars="none"
         android:background="@drawable/home_bg" >
-            <TextView 
+            <EditText                 
                 android:id="@+id/testView"
+                android:gravity="center"
                 android:text="@string/activity_not_found" 	
-                android:textColor="@color/white"	 
+                android:textColor="@color/black"	 
                 android:textSize="40dip"   
                 android:layout_width="match_parent"
             	android:layout_height="match_parent"
-            	android:background="@drawable/refurbish_pressed"
-            	/>
+            	android:background="@drawable/refurbish_pressed"/>
  
     </com.baidu.player.ui.HomeScrollView>
 

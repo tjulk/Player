@@ -15,7 +15,7 @@ import com.baidu.player.R;
 
 /**
  * @ClassName: BdErrorView 
- * @Description: TODO(这里用一句话描述这个类的作用) 
+ * @Description: 错误页
  * @author LEIKANG 
  * @date 2012-12-6 下午12:46:47
  */
@@ -69,7 +69,6 @@ public class BPErrorView extends ScrollView  {
 	public static final int FILE_NAME_ERROR = 19;
 	public static final int FILE_SIZE_ERROR = 20;
 	public static final int PARSE_DATA_ERROR = 21;
-	// CHECKSTYLE:ON
 
 	/** 关联的webview实例 */
 	private BPWebPoolView mAttachedFixedWebView;

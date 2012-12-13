@@ -33,7 +33,9 @@ public class BPBrowser extends Fragment{
     public static final String FRAGMENT_TAG = "BPBrowser";
     
     /** 首页URL.*/
-    public static final String HOME_PAGE = "http://m.iqiyi.com";
+    //public static final String HOME_PAGE = "http://m.baidu.com";
+    
+    public static final String HOME_PAGE = "file:///android_asset/htmls/home.html";
     
 	/** 进度条最小值。 */
 	public static final int PROGRESS_MIN = 10;
@@ -79,6 +81,8 @@ public class BPBrowser extends Fragment{
 		initInflate();
 		if (mFrameView != null) {
 			mFrameView.onResume();
+			
+			boolean is = mFrameView.requestFocus();
 		}
 	}
 	
@@ -98,6 +102,7 @@ public class BPBrowser extends Fragment{
 			mFrameView = null;
 			//TODO browser 销毁时事件处理
 		}
+		
 		super.onDestroy();
 	}
 	

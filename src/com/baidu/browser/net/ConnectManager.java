@@ -1,4 +1,4 @@
-package com.baidu.player.net;
+package com.baidu.browser.net;
 
 import android.content.Context;
 import android.database.Cursor;

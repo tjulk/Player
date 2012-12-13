@@ -111,7 +111,6 @@ public class BPWindowWrapper extends FrameLayout {
  
         } else {
             addViewSafely(window);
-            
             if (mCurrentWindow != null) {
                 removeView(mCurrentWindow);
             }

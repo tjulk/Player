@@ -93,6 +93,9 @@ public class BPFrameView extends FrameLayout{
 	/** searchbox阴影:搜索框下面的阴影 **/
 	private ImageView mSearchboxShadow;
 	
+	/** 搜索框阴影区 **/
+	private int mSearchShadowDis;
+	
 	/** 进度条高度 **/
 	private int mProgressHeight;
 	
@@ -108,11 +111,14 @@ public class BPFrameView extends FrameLayout{
 	/** Browser 主类 */
 	private BPBrowser mBrowser;
 	
+	private Context mContext;
+	
 	/**
 	 * @param context
 	 */
 	public BPFrameView(Context context) {
 		this(context, null);
+		mContext = context;
 	}
 	
 	/**
@@ -121,6 +127,7 @@ public class BPFrameView extends FrameLayout{
 	 */
 	public BPFrameView(Context context, AttributeSet attrs) {
 		this(context, attrs, 0);
+		mContext = context;
 	}
 	
 	/**
@@ -130,11 +137,13 @@ public class BPFrameView extends FrameLayout{
 	 */
 	public BPFrameView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs);
+		mContext = context;
 		mWindowList = new ArrayList<BPWindow>();
 		mFloatPlayerSearchHeight = context.getResources().getDimensionPixelSize(R.dimen.float_searchbox_height);
 		mToolbarHeight = context.getResources().getDimensionPixelSize(R.dimen.bottom_toolbar_height);
 		mProgressHeight = context.getResources().getDimensionPixelSize(R.dimen.browser_progress_bar_height);
 		mToolBarShadowDis = context.getResources().getDimensionPixelSize(R.dimen.browser_float_toolbar_shadow);
+		mSearchShadowDis = context.getResources().getDimensionPixelSize(R.dimen.browser_float_searchbox_shadow);
 		
 		mFloatSearch = (FloatPlayerSearchLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.float_player_search, null);
 		mFloatSearch.setEnableStartSearch(false);
@@ -147,12 +156,17 @@ public class BPFrameView extends FrameLayout{
 		
 		addView(mFloatSearch, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,mFloatPlayerSearchHeight));
 		
+		mWindowWrapper = new BPWindowWrapper(context);
+		addView(mWindowWrapper, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT));
+		
+		mSearchboxShadow = new ImageView(context);
+		mSearchboxShadow.setBackgroundResource(R.drawable.float_shadow);
+		addView(mSearchboxShadow, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,mSearchShadowDis));
+		
 		mProgressBar = (FakeProgressBar) ((Activity) context).getLayoutInflater().inflate(R.layout.browser_progress_bar, null);
+		mProgressBar.setVisibility(View.VISIBLE);
 		addView(mProgressBar, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,mProgressHeight));
 		
-		mWindowWrapper = new BPWindowWrapper(context);
-        addView(mWindowWrapper, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT));
-        
         mToolbar = (RelativeLayout) ((Activity) context).getLayoutInflater().inflate(R.layout.browser_toolbar, null);
         addView(mToolbar, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, mToolbarHeight));
         
@@ -237,16 +251,16 @@ public class BPFrameView extends FrameLayout{
 						goForward();
 						break;
 					case R.id.browser_bottom_menu:
-						Toast.makeText(getContext(), "browser_bottom_menu", Toast.LENGTH_SHORT).show();
+						Toast.makeText(mContext , "browser_bottom_menu", Toast.LENGTH_SHORT).show();
 						break;
 					case R.id.browser_album:
-						Toast.makeText(getContext(), "browser_album", Toast.LENGTH_SHORT).show();
+						Toast.makeText(mContext, "browser_album", Toast.LENGTH_SHORT).show();
 						break;
 					case R.id.browser_multiwindows:
-						Toast.makeText(getContext(), "browser_multiwindows", Toast.LENGTH_SHORT).show();
+						Toast.makeText(mContext, "browser_multiwindows", Toast.LENGTH_SHORT).show();
 						break;
 					case R.id.browser_personal:
-						Toast.makeText(getContext(), "browser_personal", Toast.LENGTH_SHORT).show();
+						Toast.makeText(mContext, "browser_personal", Toast.LENGTH_SHORT).show();
 						break;
 					default:
 						break;
@@ -425,6 +439,14 @@ public class BPFrameView extends FrameLayout{
         window.setFrameView(this);
         window.setLayoutParams(exploreLayout);
         window.setPosition(mWindowList.size());
+        
+        boolean isf = window.isFocused();
+        boolean isfb = window.isFocusable();
+        boolean isfbw = window.isFocusableInTouchMode();
+        
+        window.requestLayout();
+        window.requestFocus();
+        
         mWindowList.add(window);
         
         if (savedState == null) {
@@ -462,8 +484,8 @@ public class BPFrameView extends FrameLayout{
 				//Bundle b = mBrowser.getSearchBoxBundle(true);
 				//mCurrentWindow.setSearchboxBundle(b);
 			}
-			mCurrentWindow = window;
 			mWindowWrapper.showWindow(window, mWindowStwitchAnimation, searchUrl);
+			mCurrentWindow = window;
 			//mCurrentWindow.setLastViewedTime(SystemClock.uptimeMillis());
 			
 			if (mCurrentWindow != null && mBrowser != null) {
@@ -541,6 +563,7 @@ public class BPFrameView extends FrameLayout{
         if (mCurrentWindow.isHomePage()) {
             mCurrentWindow.getHomeView().onResume();
         } else {
+        	
         }
 	}
 

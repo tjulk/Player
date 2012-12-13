@@ -46,7 +46,7 @@ import com.baidu.webkit.sdk.BWebView.BWebViewTransport;
 public class BPWindow extends FrameLayout implements BPExploreViewListener{
 	
     /** Log Tag */
-    public static final String TAG = "BdWindow";
+    public static final String TAG = "BPWindow";
  
     /**与window position组合成key，用来保存current url。*/
     private static final String CURRENT_URL = "CURRENT_URL";
@@ -652,6 +652,9 @@ public class BPWindow extends FrameLayout implements BPExploreViewListener{
 	 */
 	@Override
 	public void onLongPress(BHitTestResult result) {
+		
+		Toast.makeText(getContext(), "long press", Toast.LENGTH_SHORT).show();
+		
 		try {
 			if (result == null) {
 				return;

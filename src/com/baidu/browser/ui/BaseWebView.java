@@ -110,14 +110,17 @@ public class BaseWebView extends BWebView {
         s.setDatabaseEnabled(true);
         s.setDomStorageEnabled(true);
         s.setGeolocationEnabled(true);
+        s.setJavaScriptEnabled(true);
+        s.setJavaScriptCanOpenWindowsAutomatically(true);
         
         String databasePath = context.getDir(APP_DATABASE_PATH, 0).getPath();
         String geolocationDatabasePath = context.getDir(APP_GEO_PATH, 0).getPath();
         String appCachePath = context.getDir(APP_CACHE_PATH, 0).getPath();
         s.setGeolocationDatabasePath(geolocationDatabasePath);
         s.setDatabasePath(databasePath);
-        // settings.setAppCacheMaxSize(appCacheMaxSize);
         s.setAppCachePath(appCachePath);
+        
+        s.setSupportZoom(true);
     }
     
     /**

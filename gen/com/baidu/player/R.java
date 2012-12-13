@@ -46,77 +46,80 @@ public final class R {
     public static final class dimen {
         /**  底部工具栏高度 
          */
-        public static final int bottom_toolbar_height=0x7f070002;
+        public static final int bottom_toolbar_height=0x7f070003;
+        /**  搜索框下方阴影高度 
+         */
+        public static final int browser_float_searchbox_shadow=0x7f070002;
         /**  底部工具条阴影 
          */
-        public static final int browser_float_toolbar_shadow=0x7f070003;
+        public static final int browser_float_toolbar_shadow=0x7f070004;
         /**  进度条高度 
          */
-        public static final int browser_progress_bar_height=0x7f070004;
+        public static final int browser_progress_bar_height=0x7f070005;
         /**  进度条偏移量 
          */
-        public static final int browser_progressbar_offset=0x7f070005;
-        public static final int clear_content_icon_size=0x7f070006;
+        public static final int browser_progressbar_offset=0x7f070006;
+        public static final int clear_content_icon_size=0x7f070007;
         public static final int context_menu_item_tv_font_size=0x7f070000;
         /**  搜索框高度 
          */
         public static final int float_searchbox_height=0x7f070001;
     }
     public static final class drawable {
-        public static final int app_notes=0x7f020000;
-        public static final int borwser_error_page=0x7f020001;
-        public static final int borwser_errorpage_error=0x7f020002;
-        public static final int borwser_errorpage_error_not_found=0x7f020003;
-        public static final int bottombar_windows=0x7f020004;
-        public static final int bottombar_windows_0=0x7f020005;
-        public static final int bottombar_windows_2=0x7f020006;
-        public static final int bottombar_windows_3=0x7f020007;
-        public static final int bottombar_windows_4=0x7f020008;
-        public static final int bottombar_windows_5=0x7f020009;
-        public static final int bottombar_windows_6=0x7f02000a;
-        public static final int bottombar_windows_7=0x7f02000b;
-        public static final int bottombar_windows_8=0x7f02000c;
-        public static final int bottor_bar_divider=0x7f02000d;
-        public static final int brow_adress_search_mark_insert=0x7f02000e;
-        public static final int brow_adress_search_mark_normal=0x7f02000f;
-        public static final int brow_adress_search_mark_selected=0x7f020010;
-        public static final int brow_top_refresh=0x7f020011;
-        public static final int brow_top_refresh_normal=0x7f020012;
-        public static final int brow_top_refresh_selected=0x7f020013;
-        public static final int brow_top_search=0x7f020014;
-        public static final int brow_top_search_normal=0x7f020015;
-        public static final int brow_top_search_selected=0x7f020016;
-        public static final int browser_album=0x7f020017;
-        public static final int browser_album_disable=0x7f020018;
-        public static final int browser_album_normal=0x7f020019;
-        public static final int browser_album_selected=0x7f02001a;
-        public static final int browser_back=0x7f02001b;
-        public static final int browser_back_disable=0x7f02001c;
-        public static final int browser_back_normal=0x7f02001d;
-        public static final int browser_back_selected=0x7f02001e;
-        public static final int browser_forward=0x7f02001f;
-        public static final int browser_forward_disable=0x7f020020;
-        public static final int browser_forward_normal=0x7f020021;
-        public static final int browser_forward_selected=0x7f020022;
-        public static final int browser_home=0x7f020023;
-        public static final int browser_home_disable=0x7f020024;
-        public static final int browser_home_nomal=0x7f020025;
-        public static final int browser_menu=0x7f020026;
-        public static final int browser_menu_normal=0x7f020027;
-        public static final int browser_menu_selected=0x7f020028;
-        public static final int browser_personal=0x7f020029;
-        public static final int browser_personal_disable=0x7f02002a;
-        public static final int browser_personal_normal=0x7f02002b;
-        public static final int browser_personal_select=0x7f02002c;
-        public static final int browser_progress_bar=0x7f02002d;
-        public static final int browser_select_btn_bg=0x7f02002e;
-        public static final int browser_select_btn_bg_pressed=0x7f02002f;
-        public static final int browser_select_menu_down_bg=0x7f020030;
-        public static final int browser_select_menu_up_bg=0x7f020031;
-        public static final int browser_select_separator=0x7f020032;
-        public static final int browser_webview_error_btn_selector=0x7f020033;
-        public static final int button_back_selector=0x7f020034;
-        public static final int button_press=0x7f020035;
+        public static final int borwser_error_page=0x7f020000;
+        public static final int borwser_errorpage_error=0x7f020001;
+        public static final int borwser_errorpage_error_not_found=0x7f020002;
+        public static final int bottombar_windows=0x7f020003;
+        public static final int bottombar_windows_0=0x7f020004;
+        public static final int bottombar_windows_2=0x7f020005;
+        public static final int bottombar_windows_3=0x7f020006;
+        public static final int bottombar_windows_4=0x7f020007;
+        public static final int bottombar_windows_5=0x7f020008;
+        public static final int bottombar_windows_6=0x7f020009;
+        public static final int bottombar_windows_7=0x7f02000a;
+        public static final int bottombar_windows_8=0x7f02000b;
+        public static final int bottor_bar_divider=0x7f02000c;
+        public static final int brow_adress_search_mark_insert=0x7f02000d;
+        public static final int brow_adress_search_mark_normal=0x7f02000e;
+        public static final int brow_adress_search_mark_selected=0x7f02000f;
+        public static final int brow_top_refresh=0x7f020010;
+        public static final int brow_top_refresh_normal=0x7f020011;
+        public static final int brow_top_refresh_selected=0x7f020012;
+        public static final int brow_top_search=0x7f020013;
+        public static final int brow_top_search_normal=0x7f020014;
+        public static final int brow_top_search_selected=0x7f020015;
+        public static final int browser_album=0x7f020016;
+        public static final int browser_album_disable=0x7f020017;
+        public static final int browser_album_normal=0x7f020018;
+        public static final int browser_album_selected=0x7f020019;
+        public static final int browser_back=0x7f02001a;
+        public static final int browser_back_disable=0x7f02001b;
+        public static final int browser_back_normal=0x7f02001c;
+        public static final int browser_back_selected=0x7f02001d;
+        public static final int browser_forward=0x7f02001e;
+        public static final int browser_forward_disable=0x7f02001f;
+        public static final int browser_forward_normal=0x7f020020;
+        public static final int browser_forward_selected=0x7f020021;
+        public static final int browser_home=0x7f020022;
+        public static final int browser_home_disable=0x7f020023;
+        public static final int browser_home_nomal=0x7f020024;
+        public static final int browser_menu=0x7f020025;
+        public static final int browser_menu_normal=0x7f020026;
+        public static final int browser_menu_selected=0x7f020027;
+        public static final int browser_personal=0x7f020028;
+        public static final int browser_personal_disable=0x7f020029;
+        public static final int browser_personal_normal=0x7f02002a;
+        public static final int browser_personal_select=0x7f02002b;
+        public static final int browser_progress_bar=0x7f02002c;
+        public static final int browser_select_btn_bg=0x7f02002d;
+        public static final int browser_select_btn_bg_pressed=0x7f02002e;
+        public static final int browser_select_menu_down_bg=0x7f02002f;
+        public static final int browser_select_menu_up_bg=0x7f020030;
+        public static final int browser_select_separator=0x7f020031;
+        public static final int browser_webview_error_btn_selector=0x7f020032;
+        public static final int button_back_selector=0x7f020033;
+        public static final int button_press=0x7f020034;
+        public static final int float_shadow=0x7f020035;
         public static final int float_spinner_down=0x7f020036;
         public static final int float_spinner_up=0x7f020037;
         public static final int float_toolbar_shadow=0x7f020038;
@@ -124,28 +127,29 @@ public final class R {
         public static final int home_bg=0x7f02003a;
         public static final int home_bg_block=0x7f02003b;
         public static final int home_toolbar_bg=0x7f02003c;
-        public static final int local_setting_nomal=0x7f02003d;
-        public static final int local_setting_press=0x7f02003e;
-        public static final int mainview_tabs_divise=0x7f02003f;
-        public static final int null_drawable=0x7f020052;
-        public static final int overscroll_edge=0x7f020040;
-        public static final int overscroll_glow=0x7f020041;
-        public static final int private_mode_tips_bg=0x7f020042;
-        public static final int progress=0x7f020043;
-        public static final int progress_thumb=0x7f020044;
-        public static final int refurbish_nomal=0x7f020045;
-        public static final int refurbish_pressed=0x7f020046;
-        public static final int search_sug_bg_normal=0x7f020047;
-        public static final int search_sug_bg_pressed=0x7f020048;
-        public static final int search_sug_bg_simple_normal=0x7f020049;
-        public static final int search_sug_keywords_normal=0x7f02004a;
-        public static final int search_sug_list_bg=0x7f02004b;
-        public static final int searchbox_clear_text=0x7f02004c;
-        public static final int searchbox_inputbox_bg=0x7f02004d;
-        public static final int searchbox_panel_button_background_selector=0x7f02004e;
-        public static final int sug_local_setting_selector=0x7f02004f;
-        public static final int suggestion_item_down_stroke=0x7f020050;
-        public static final int suggestion_list_selector_simple_bg=0x7f020051;
+        public static final int icon=0x7f02003d;
+        public static final int local_setting_nomal=0x7f02003e;
+        public static final int local_setting_press=0x7f02003f;
+        public static final int mainview_tabs_divise=0x7f020040;
+        public static final int null_drawable=0x7f020053;
+        public static final int overscroll_edge=0x7f020041;
+        public static final int overscroll_glow=0x7f020042;
+        public static final int private_mode_tips_bg=0x7f020043;
+        public static final int progress=0x7f020044;
+        public static final int progress_thumb=0x7f020045;
+        public static final int refurbish_nomal=0x7f020046;
+        public static final int refurbish_pressed=0x7f020047;
+        public static final int search_sug_bg_normal=0x7f020048;
+        public static final int search_sug_bg_pressed=0x7f020049;
+        public static final int search_sug_bg_simple_normal=0x7f02004a;
+        public static final int search_sug_keywords_normal=0x7f02004b;
+        public static final int search_sug_list_bg=0x7f02004c;
+        public static final int searchbox_clear_text=0x7f02004d;
+        public static final int searchbox_inputbox_bg=0x7f02004e;
+        public static final int searchbox_panel_button_background_selector=0x7f02004f;
+        public static final int sug_local_setting_selector=0x7f020050;
+        public static final int suggestion_item_down_stroke=0x7f020051;
+        public static final int suggestion_list_selector_simple_bg=0x7f020052;
     }
     public static final class id {
         public static final int MainRoot=0x7f060026;

@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 import org.apache.http.params.HttpConnectionParams;
 
-import com.baidu.player.net.ProxyHttpClient;
+import com.baidu.browser.net.ProxyHttpClient;
 
 import android.app.Activity;
 import android.content.Context;

@@ -3,6 +3,8 @@
     <dimen name="context_menu_item_tv_font_size">19dip</dimen>
 	<!-- 搜索框高度 -->	
     <dimen name="float_searchbox_height">56dip</dimen>
+    <!-- 搜索框下方阴影高度 -->
+    <dimen name="browser_float_searchbox_shadow">2dip</dimen>
     <!-- 底部工具栏高度 -->
 	<dimen name="bottom_toolbar_height">47dip</dimen>
 	<!-- 底部工具条阴影 -->

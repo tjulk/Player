@@ -17,6 +17,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -50,11 +51,6 @@ import com.baidu.webkit.sdk.BWebChromeClient.BCustomViewCallback;
 import com.baidu.webkit.sdk.BWebHistoryItem;
 import com.baidu.webkit.sdk.BWebSettings;
 import com.baidu.webkit.sdk.BWebView;
-import com.baidu.webkit.sdk.BWebSettings.BLayoutAlgorithm;
-import com.baidu.webkit.sdk.BWebSettings.BPluginState;
-import com.baidu.webkit.sdk.BWebSettings.BRenderPriority;
-import com.baidu.webkit.sdk.BWebSettings.BTextSize;
-import com.baidu.webkit.sdk.BWebSettings.BZoomDensity;
 import com.baidu.webkit.sdk.BWebView.BHitTestResult;
 import com.baidu.webkit.sdk.BWebViewClient;
 /**
@@ -232,80 +228,6 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 		// 初始化BdWebPoolView的BdWebSettings
 		BWebView initWebView = getFreeWebView();
 		BWebSettings settings = initWebView.getSettings();
-		
-		if (settings == null)
-			settings = new BWebSettings() {
-				@Override
-				protected void setTextSizeImpl(BTextSize arg0) {
-					// TODO Auto-generated method stub
-				}
-				
-				@Override
-				protected void setRenderPriorityImpl(BRenderPriority arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				protected void setPluginStateImpl(BPluginState arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				protected void setLayoutAlgorithmImpl(BLayoutAlgorithm arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void setDefaultZoom(BZoomDensity arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void setCacheMode(int arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				protected Object getWebKitObj() {
-					// TODO Auto-generated method stub
-					return null;
-				}
-				
-				@Override
-				protected BTextSize getTextSizeImpl() {
-					// TODO Auto-generated method stub
-					return null;
-				}
-				
-				@Override
-				protected BPluginState getPluginStateImpl() {
-					// TODO Auto-generated method stub
-					return null;
-				}
-				
-				@Override
-				protected BLayoutAlgorithm getLayoutAlgorithmImpl() {
-					// TODO Auto-generated method stub
-					return null;
-				}
-				
-				@Override
-				public BZoomDensity getDefaultZoom() {
-					// TODO Auto-generated method stub
-					return null;
-				}
-				
-				@Override
-				public int getCacheMode() {
-					// TODO Auto-generated method stub
-					return 0;
-				}
-			};
 		
 		mSettings = settings;
 
@@ -593,6 +515,12 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
         //使用单WebView，让其自己控制前进后退历史列表
         if (mCurWebView != null) {
             mCurWebView.goBack();
+            // 4.0以上版本前进后退强制翻页，解决白屏问题 bugfix#SEARHBOX-859
+            //if (Build.VERSION.SDK_INT >= 14) {
+                //if (mCurWebView.scrollUp()) {
+                    //mCurWebView.scrollDown();
+                //}
+            //}
         }
 	}
 
@@ -603,6 +531,12 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
         //使用单WebView，让其自己控制前进后退历史列表
 	    if (mCurWebView != null) {
 	        mCurWebView.goForward();
+            // 4.0以上版本前进后退强制翻页，解决白屏问题 bugfix#SEARHBOX-859
+	        if (Build.VERSION.SDK_INT >= 14) {
+                //if (mCurWebView.scrollUp()) {
+                //    mCurWebView.scrollDown();
+                //}
+            }
 	    }
 	}
 
@@ -1206,7 +1140,7 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
     }
     
 	/**
-	 * 获取一个可用的BdWebview
+	 * 获取一个可用的BPWebview
 	 * 
 	 * @param aClickMode
 	 *            点击模式
@@ -1236,9 +1170,9 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 	}
 
 	/**
-	 * 获取一个新的BdWebview
+	 * 获取一个新的BPWebview
 	 * 
-	 * @return BdWebview实例
+	 * @return BPWebview实例
 	 */
 	private BPWebPoolCustomView getFreeWebView() {
  
@@ -1254,6 +1188,9 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 			webview.setWebViewClient(new BPWebPoolCustomViewClient());
 			webview.setWebChromeClient(new BPWebPoolCustomChromeClient());
 			webview.setOnLongClickListener(this);
+			
+			BaseWebView.setSupportHtml5(context, webview);
+			BaseWebView.removeInitialFocus(context, webview);
 
 			// 初始化JavascriptInterface
 			initJavascriptClients(webview);
@@ -1268,12 +1205,8 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 			//将原来switchWebView中的逻辑移到此处，保证单WebView正常使用
 			addWebView(webview);
 			webview.onResume();
-            View view = webview;
-            if (view != null) {
-                view.requestFocus();
-            }
-            mCurWebView = webview;
             webview.requestFocus();
+            mCurWebView = webview;
 		}
 		return webview;
 	}
@@ -1486,7 +1419,6 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 		if (mCurWebView != null) {
 			mCurWebView.setLoadMode(LoadMode.LOAD_NORMAL);
 			mCurWebView.loadUrl(aUrl);
-			mCurWebView.requestFocus();
 		}
 
 		hideErrorPage();
@@ -1642,6 +1574,10 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 
 	@Override
 	public boolean onLongClick(View v) {
+		
+		Toast.makeText(getContext(), "long click", Toast.LENGTH_SHORT).show();
+		
+		
 		return false;
 	}
 
@@ -1651,6 +1587,12 @@ public class BPWebPoolView extends FrameLayout implements BPErrorViewListener, O
 	public void onResume() {
 		if (mCurWebView != null) {
 			mCurWebView.onResume();
+			// 4.0以上版本前进后退强制翻页，解决白屏问题  
+            if (Build.VERSION.SDK_INT >= 14) {
+                //if (mCurWebView.scrollUp()) {
+                //    mCurWebView.scrollDown();
+                //}
+            }
 		}
 	}
 

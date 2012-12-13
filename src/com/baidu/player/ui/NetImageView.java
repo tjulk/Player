@@ -21,8 +21,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.ImageView;
 
+import com.baidu.browser.net.ProxyHttpClient;
 import com.baidu.player.R;
-import com.baidu.player.net.ProxyHttpClient;
 import com.baidu.player.util.Utility;
 
 /**

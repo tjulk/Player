@@ -137,14 +137,6 @@ public class HomeView extends RelativeLayout{
             Log.d(TAG, "init()");
         }
         mHomeScrollView = (HomeScrollView) findViewById(R.id.main_view);
-        
-        View viewTest =  (View)mHomeScrollView.findViewById(R.id.testView);
-        
-        mHomeScrollView.spanView(viewTest, viewTest);
-        mHomeScrollView.requestLayout();
-        
-        requestLayout();
-
     }
 
 	public void onPause() {
@@ -153,10 +145,7 @@ public class HomeView extends RelativeLayout{
 	}
 
 	public void onResume() {
-        View viewTest =  (View)mHomeScrollView.findViewById(R.id.testView);
-        viewTest.setVisibility(View.GONE);
-        mHomeScrollView.spanView(viewTest, viewTest);
-		mHomeScrollView.requestLayout();
+ 
 	}
 
 	public void onDestroy() {

@@ -1,4 +1,4 @@
-package com.baidu.player.net;
+package com.baidu.browser.net;
 
 import org.apache.http.HttpHost;
 import org.apache.http.conn.params.ConnRouteParams;
